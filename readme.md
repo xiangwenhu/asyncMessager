@@ -1,0 +1,1 @@
+异步回调转Promise通用方案。支持EventEmitter, MQTT, iframe， webview等等场景。
