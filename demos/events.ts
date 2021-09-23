@@ -42,6 +42,15 @@ const emitterAsyncMessager = new EmitterAsyncMessager();
 emitterAsyncMessager.subscribe();
 
 
+
+setInterval(() => {
+    emitter.emit('message', {
+        method: 'continuous-event',
+        data: new Date().toLocaleTimeString()
+    })
+}, 3000)
+
+
 emitter.on("message-request", (data: RequestData) => {
 
     setTimeout(() => {
@@ -57,6 +66,11 @@ emitter.on("message-request", (data: RequestData) => {
 emitterAsyncMessager.invoke({
     method: "cccc",
     data: 111
-}).then(res=> console.log("res:", res))
+}).then(res => console.log("res:", res))
+
+
+emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
+    console.log("continuous-event:", data);
+})
 
 

@@ -265,11 +265,11 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
     }
 
 
-    addHandler() {
+    get addHandler() {
         return this.passiveEventMessager.addHandler || util.noop
     }
 
-    removeHandler() {
+    get removeHandler() {
         return this.passiveEventMessager.removeHandler || util.noop;
     }
 
