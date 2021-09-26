@@ -1,8 +1,6 @@
 import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
 
-const { hasOwnProperty } = Object.prototype;
-
 export interface BaseReqData<R = any, S = any> {
     _key_?: string;
     scope?: string;
@@ -28,9 +26,24 @@ export interface GlobalReqOptions<R = any, S = any> {
     autoSubscribe?: boolean;
     clearTimeoutReq?: boolean;
     enableLog?: boolean;
+    /**
+     * 订阅
+     */
     subscribe?(): Unsubscribe;
+    /**
+     * 获得请求的key
+     * @param data 
+     */
     getReqkey?<R>(data: R): string;
+    /**
+     * 获取请求的Category
+     * @param data 
+     */
     getReqCategory?(data: R): string;
+    /**
+     * 获得响应的Key
+     * @param data 
+     */
     getResKey?(data: S): string
     /**
      * 打开多个被请求方， 比如多个webview
@@ -40,8 +53,22 @@ export interface GlobalReqOptions<R = any, S = any> {
      * 提供返回后，再处理数据的能力
      */
     onReponse?: (data: S) => S;
+    /**
+     * 获取响应的Category
+     * @param data 
+     */
     getResCategory?(data: S): string;
+    /**
+     * 真正的请求
+     * @param data 
+     * @param key 
+     */
     request?(data: R, key: string): any;
+    /**
+     * 获取hashCode
+     * @param data 
+     */
+    getHashCode?(data: R): string | number;
 }
 
 export interface ReqOptions {
@@ -51,7 +78,7 @@ export interface ReqOptions {
 
 type Unsubscribe = () => void;
 
-type extensibleMethod = "subscribe" | "getReqkey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse";
+type extensibleMethod = "subscribe" | "getReqkey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
 
 export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> {
     /**
@@ -88,8 +115,8 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
     abstract subscribe(): Unsubscribe;
 
     protected getReqkey<R>(data: R) {
-        const hashKey = `${util.hashcode(JSON.stringify({ data }))}`;
-        return hashKey;
+        const method = this.getMethod("getHashCode");
+        return method!(data);
     }
 
     protected abstract getReqCategory(data: R): string;
@@ -106,7 +133,16 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
         return (data as any).scope;
     }
 
-    protected onResponse(category:string, data: S) {
+    /**
+     * 计算hashCode
+     * @param data 
+     * @returns 
+     */
+    protected getHashCode(data: R) {
+        return util.hashcode(JSON.stringify(data))
+    }
+
+    protected onResponse(_category: string, data: S) {
         return data;
     }
 
@@ -115,6 +151,7 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
         if (!method) {
             console.error(`${method} 查找失败，请确保在Class或者options上已定义`);
         }
+        console.log("getMethod:", method)  
         return method as Function;
     }
 
@@ -132,7 +169,7 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
         const callback = this.getCallback(category, scope, key);
         if (!callback) {
             this.onError();
-            console.log(`未找到category为${category},key为${key}的回调信息`);
+            // console.log(`未找到category为${category},key为${key}的回调信息`);
             return;
         }
         this.onSuccess(category, data);
@@ -166,7 +203,7 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
             return reqInfo.cb;
         }
 
-        // ToDO:: scope
+        // TODO:: scope
         if (!cbs || cbs.length == 0) {
             return undefined;
         }
@@ -185,8 +222,8 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
         } = reqOptions || {};
 
         // 获得key值
-        if (!hasOwnProperty.call(data, "_key_")) {
-            data._key_ = this.getMethod("getReqkey")(data);
+        if (!util.hasOwnProperty(data, "_key_")) {
+            data._key_ = this.getMethod("getReqkey").apply(this, [data]);
         }
         const hashKey = data._key_!;
 

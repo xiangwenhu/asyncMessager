@@ -1,6 +1,8 @@
+const { hasOwnProperty: hasOwn } = Object.prototype;
+
 /* eslint-disable no-bitwise */
 /* eslint-disable no-shadow */
-export function hashcode(str = "") {
+export function hashcode(str = ""): number{
     let hash = 0; let i; let chr; let
         len;
     if (str.length === 0) return hash;
@@ -12,7 +14,7 @@ export function hashcode(str = "") {
     return hash;
 }
 
-export function isFunction(fn: Function): boolean {
+export function isFunction(fn: unknown): boolean {
     return typeof fn === 'function'
 }
 
@@ -23,7 +25,7 @@ export function isFunction(fn: Function): boolean {
  * @param context 
  * @returns 
  */
- export function delay(fn: Function = () => { }, delay: number = 5000, context: unknown = null): {
+export function delay(fn: Function = () => { }, delay: number = 5000, context: unknown = null): {
     run: (...args: any[]) => Promise<any>,
     cancel: () => void
 } {
@@ -59,3 +61,8 @@ export function isFunction(fn: Function): boolean {
 }
 
 export const noop = function noop() { };
+
+
+export function hasOwnProperty(obj: any, property: PropertyKey): boolean {
+    return hasOwn.call(obj, property)
+}
