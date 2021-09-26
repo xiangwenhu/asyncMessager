@@ -29,7 +29,7 @@ export interface GlobalReqOptions<R = any, S = any> {
     /**
      * 订阅
      */
-    subscribe?(): Unsubscribe;
+    subscribe?(onMessage?: Function): Unsubscribe;
     /**
      * 获得请求的key
      * @param data 
@@ -80,7 +80,9 @@ type Unsubscribe = () => void;
 
 type extensibleMethod = "subscribe" | "getReqkey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
 
-export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> {
+export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
+
+    private useOptions: boolean = false;
     /**
      * 请求的次数
      */
@@ -106,24 +108,33 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
         private passiveEventMessager: IPEventMessager = new PEventMessager()) {
         this._options = { ...DEFAULT_G_OPTIONS, ...options };
 
-        // if (this._options.autoSubscribe) {
-        //     // 订阅
-        //     this.unsubscribe = this.getMethod("subscribe")();
-        // }
+        if (util.isFunction(this._options.subscribe)) {
+            // 订阅
+            this.unsubscribe = this._options.subscribe!(this.onMessage)
+        }
+        this.useOptions = true;
     }
 
-    abstract subscribe(): Unsubscribe;
+    subscribe(onMessage?: Function): Unsubscribe {
+        throw new Error("not implemented")
+    }
 
     protected getReqkey<R>(data: R) {
         const method = this.getMethod("getHashCode");
         return method!(data);
     }
 
-    protected abstract getReqCategory(data: R): string;
+    protected getReqCategory(data: R): string {
+        throw new Error("not implemented")
+    }
 
-    protected abstract getResCategory(data: S): string;
+    protected getResCategory(data: S): string {
+        throw new Error("not implemented")
+    }
 
-    protected abstract request(data: R, key: string): any;
+    protected request(data: R, key: string): any {
+        throw new Error("not implemented")
+    }
 
     protected getResKey(data: S): string {
         return (data as any)._key_;
@@ -147,11 +158,14 @@ export default abstract class BaseAsyncMessager<R extends BaseReqData, S = any> 
     }
 
     private getMethod = (name: extensibleMethod) => {
-        const method = this[name as keyof this] || this._options[name as keyof GlobalReqOptions];
+
+        const optMethod = this._options[name as keyof GlobalReqOptions];
+        const classMethod = this[name as keyof this];
+
+        const method = this.useOptions ?  optMethod || classMethod : classMethod || optMethod;
         if (!method) {
             console.error(`${method} 查找失败，请确保在Class或者options上已定义`);
         }
-        console.log("getMethod:", method)  
         return method as Function;
     }
 
