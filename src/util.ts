@@ -18,6 +18,10 @@ export function isFunction(fn: unknown): boolean {
     return typeof fn === 'function'
 }
 
+
+export const noop = function noop() { };
+
+
 /**
  * 延时执行函数
  * @param fn 
@@ -32,7 +36,7 @@ export function delay(fn: Function = () => { }, delay: number = 5000, context: u
     if (!isFunction(fn)) {
         return {
             run: () => Promise.resolve(),
-            cancel: () => { }
+            cancel: noop
         }
     }
     let ticket: any;
@@ -60,7 +64,6 @@ export function delay(fn: Function = () => { }, delay: number = 5000, context: u
     }
 }
 
-export const noop = function noop() { };
 
 
 export function hasOwnProperty(obj: any, property: PropertyKey): boolean {

@@ -1,5 +1,6 @@
 import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
+import { MessageType } from "./types";
 
 export interface BaseReqData<R = any, S = any> {
     _key_?: string;
@@ -39,7 +40,7 @@ export interface GlobalReqOptions<R = any, S = any> {
      * 获取请求的Category
      * @param data 
      */
-    getReqCategory?(data: R): string;
+    getReqCategory?(data: R): MessageType;
     /**
      * 获得响应的Key
      * @param data 
@@ -57,7 +58,7 @@ export interface GlobalReqOptions<R = any, S = any> {
      * 获取响应的Category
      * @param data 
      */
-    getResCategory?(data: S): string;
+    getResCategory?(data: S): MessageType;
     /**
      * 真正的请求
      * @param data 
@@ -100,7 +101,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
 
     private _options: GlobalReqOptions;
 
-    private cbMap = new Map<string, ReqInfo<R>[]>();
+    private cbMap = new Map<MessageType, ReqInfo<R>[]>();
 
     protected unsubscribe?: Unsubscribe;
 
@@ -153,7 +154,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         return util.hashcode(JSON.stringify(data))
     }
 
-    protected onResponse(_category: string, data: S) {
+    protected onResponse(_category: MessageType, data: S) {
         return data;
     }
 
@@ -177,6 +178,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         const scope = this.getMethod("getResScope")(data);
         // 提供自定义助力数据的能力
         data = this.getMethod("onResponse")(category, data);
+
         // 内置的成功处理
         this.onBuiltInResponse(category, data);
 
@@ -190,7 +192,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         callback(data);
     }
 
-    private addCallback(category: string, reqInfo: ReqInfo) {
+    private addCallback(category: MessageType, reqInfo: ReqInfo) {
         const cbs = this.cbMap.get(category);
         if (!cbs) {
             this.cbMap.set(category, []);
@@ -203,7 +205,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         });
     }
 
-    private getCallback(category: string, scope: string, key: string) {
+    private getCallback(category: MessageType, scope: string, key: string) {
         const cbs = this.cbMap.get(category);
         if (!cbs) {
             return undefined;
@@ -272,7 +274,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         });
     }
 
-    private removeReqInfo(category: string, scope: string, key: string) {
+    private removeReqInfo(category: MessageType, scope: string, key: string) {
         const cbs = this.cbMap.get(category);
         if (!cbs) {
             return undefined;
@@ -295,11 +297,11 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
 
     }
 
-    private onSuccess = (category: string, data: S) => {
+    private onSuccess = (category: MessageType, data: S) => {
         this._resCount++;
     }
 
-    protected onBuiltInResponse(category: string, data: S) {
+    protected onBuiltInResponse(category: MessageType, data: S) {
         if (this.passiveEventMessager) {
             this.passiveEventMessager.emit(category, data);
         }

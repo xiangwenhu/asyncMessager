@@ -4,7 +4,7 @@ import EventEmitter from "events";
 const emitter = new EventEmitter();
 
 interface RequestData extends BaseReqData {
-    method: string;
+    method: number | string | Symbol;
     data?: any;
 }
 type ResponseData = RequestData;
@@ -32,6 +32,9 @@ const emitterAsyncMessager = new BaseAsyncMessager<RequestData>({
 });
 
 
+
+const symbolCccc = Symbol.for("cccc");
+
 /* 模拟emitter另外一端 */ 
 
 // 传统的事件通知
@@ -47,7 +50,7 @@ emitter.on("message-request", (data: RequestData) => {
     setTimeout(() => {
         emitter.emit("message", {
             method: data.method,
-            data: `${data.method}--- data`
+            data: `${data.method.toString()}--- data`
         })
     }, 3000)
 })
@@ -58,7 +61,7 @@ emitter.on("message-request", (data: RequestData) => {
 
 // 调用
 emitterAsyncMessager.invoke({
-    method: "cccc",
+    method: symbolCccc,
     data: 111
 }).then(res => console.log("res:", res))
 

@@ -1,30 +1,32 @@
 /* eslint-disable @typescript-eslint/interface-name-prefix */
+
+import { MessageType } from "./types";
+
 /* eslint-disable @typescript-eslint/no-empty-interface */
 interface HandlerInfo {
     target: any;
     methodName: string;
-    fun: Function;
+    listener: Function;
 }
 
-export interface IPEventMessager<S = any> {
-    addHandler(category: string | string[], fun: (data: S) => any, context?: any): any;
-    removeHandler?(category: string | string[], fun: (data: S) => any): any;
-    emit(category: string, data: S, ...args: any[]): any;
+export interface IPEventMessager<T = any, S = any> {
+    addHandler(category: T | T[], fun: (data: S) => any, context?: any): any;
+    removeHandler?(category: T | T[], fun: (data: S) => any): any;
+    emit(category: T, data: S, ...args: any[]): any;
 }
 
-export default class PEventMessager<S> implements IPEventMessager<S> {
-    private _map = new Map<string, HandlerInfo[]>();
-
+export default class PEventMessager implements IPEventMessager<MessageType> {
+    private _map = new Map<MessageType, HandlerInfo[]>();
     /**
      * 可以处理多种类型的事件
      * @param category
      * @returns
      */
-    addHandler = (category: string | string[], fun: (data: S) => any, context: any = null) => {
+    addHandler = (category: MessageType | MessageType[], listener: (data: any) => any, context: any = null) => {
         const cates = Array.isArray(category) ? category : [category];
         const map = this._map;
 
-        if (typeof fun !== "function") {
+        if (typeof listener !== "function") {
             return console.error(`PassiveEventMessager::addHandler: fn 必须是一个函数`);
         }
 
@@ -36,57 +38,65 @@ export default class PEventMessager<S> implements IPEventMessager<S> {
             }
 
             handlers.push({
-                methodName: fun.name,
+                methodName: listener.name || "anonymous",
                 target: context,
-                fun
+                listener
             });
         });
     }
 
-    removeHandler = (category: string | string[], fun: Function) => {
+    removeHandler = (category:  MessageType | MessageType[], listener: Function) => {
         console.log("removeHander:", category);
 
         const cates = Array.isArray(category) ? category : [category];
         const map = this._map;
 
-        if (typeof fun !== "function") {
+        if (typeof listener !== "function") {
             return console.error(`PassiveEventMessager::removeHandler: fn 必须是一个函数`);
         }
 
-        let cate: string;
+        let cate: MessageType;
         for (let i = 0; i < cates.length; i++) {
             cate = cates[i];
             const handlers = map.get(cate);
 
-            if (handlers == undefined || !Array.isArray(handlers) || handlers.length == 0) {
+            if (handlers == undefined || !Array.isArray(handlers)) {
                 continue;
             }
 
             let index;
             for (let i = handlers.length; i >= 0; i--) {
-                index = handlers.findIndex(h => h.fun === fun);
+                index = handlers.findIndex(h => h.listener === listener);
                 if (index >= 0) {
                     handlers.splice(index, 1);
+                    break;
                 }
+            }
+
+            // handlers 长度为0，删除分类
+            if (handlers.length == 0) {
+                map.delete(cate);
             }
         }
     }
 
-    emit = (category: string, data: S, ...args: any[]) => {
-        console.log("PassiveEventMessager::onMessage", category, data);
 
-        if (typeof category !== "string") {
-            return console.error(`category 必须是有效的字符串`, category);
-        }
+    has(category: MessageType) {
+        const handlers = this._map.get(category);
+        return handlers && handlers.length > 0;
+    }
+
+    emit = (category: MessageType, data: any, ...args: any[]) => {
+        // console.log("PassiveEventMessager::onMessage", category, data);
 
         const handlers = this._map.get(category);
         if (handlers == undefined) {
             return;
         }
 
-        console.log("handlers", handlers.length, handlers);
+        // console.log("handlers", handlers.length, handlers);
         handlers.forEach(handler => {
-            const { fun } = handler;
+            const { listener: fun } = handler;
             if (!fun) {
                 console.error(`PassiveEventMessager:不能找到category为${category}对应的${handler.methodName}事件处理函数`);
             } else {
