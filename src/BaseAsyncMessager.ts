@@ -20,6 +20,7 @@ const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     clearTimeoutReq: true,
     // autoSubscribe: false,
     enableLog: true,
+    logUnhandledEvent: true,
 };
 
 export interface GlobalReqOptions<R = any, S = any> {
@@ -70,6 +71,10 @@ export interface GlobalReqOptions<R = any, S = any> {
      * @param data 
      */
     getHashCode?(data: R): string | number;
+    /**
+     * 输出未处理的事件回调
+     */
+    logUnhandledEvent?: boolean;
 }
 
 export interface ReqOptions {
@@ -163,7 +168,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         const optMethod = this._options[name as keyof GlobalReqOptions];
         const classMethod = this[name as keyof this];
 
-        const method = this.useOptions ?  optMethod || classMethod : classMethod || optMethod;
+        const method = this.useOptions ? optMethod || classMethod : classMethod || optMethod;
         if (!method) {
             console.error(`${method} 查找失败，请确保在Class或者options上已定义`);
         }
@@ -179,17 +184,22 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         // 提供自定义助力数据的能力
         data = this.getMethod("onResponse")(category, data);
 
+        const isInHanlders = this.passiveEventMessager.has(category);
         // 内置的成功处理
         this.onBuiltInResponse(category, data);
 
         const callback = this.getCallback(category, scope, key);
-        if (!callback) {
+
+        //  AsyncMessager中没有，PEventMessager中也没有, 并且开启相关的日志输出
+        if (!callback && !isInHanlders && this._options.logUnhandledEvent) {
             this.onError();
-            // console.log(`未找到category为${category},key为${key}的回调信息`);
+            console.warn(`未找到category为${category},key为${key}的回调信息`);
             return;
         }
         this.onSuccess(category, data);
-        callback(data);
+        if (callback) {
+            callback(data);
+        }
     }
 
     private addCallback(category: MessageType, reqInfo: ReqInfo) {

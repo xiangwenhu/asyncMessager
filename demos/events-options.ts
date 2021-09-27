@@ -12,6 +12,7 @@ type ResponseData = RequestData;
 
 // 初始化异步Messager
 const emitterAsyncMessager = new BaseAsyncMessager<RequestData>({
+    // logUnhandledEvent: false,
     subscribe(onMessage) {
         console.log("emitterAsyncMessager: subscribe");
         emitter.on("message", onMessage as any);
@@ -34,6 +35,7 @@ const emitterAsyncMessager = new BaseAsyncMessager<RequestData>({
 
 
 const symbolCccc = Symbol.for("cccc");
+// const numberCccc = 44444;
 
 /* 模拟emitter另外一端 */ 
 
@@ -61,13 +63,18 @@ emitter.on("message-request", (data: RequestData) => {
 
 // 调用
 emitterAsyncMessager.invoke({
-    method: symbolCccc,
+    method: symbolCccc,   // numberCccc
     data: 111
 }).then(res => console.log("res:", res))
 
-// 传统的监听事件
-emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
-    console.log("continuous-event:", data);
+emitterAsyncMessager.addHandler(symbolCccc, function onEvent(data) {
+    console.log("symbolCccc:", data);
 })
+
+
+// 传统的监听事件
+// emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
+//     console.log("continuous-event:", data);
+// })
 
 

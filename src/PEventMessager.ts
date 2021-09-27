@@ -13,6 +13,7 @@ export interface IPEventMessager<T = any, S = any> {
     addHandler(category: T | T[], fun: (data: S) => any, context?: any): any;
     removeHandler?(category: T | T[], fun: (data: S) => any): any;
     emit(category: T, data: S, ...args: any[]): any;
+    has(category: T):boolean;
 }
 
 export default class PEventMessager implements IPEventMessager<MessageType> {
@@ -83,7 +84,7 @@ export default class PEventMessager implements IPEventMessager<MessageType> {
 
     has(category: MessageType) {
         const handlers = this._map.get(category);
-        return handlers && handlers.length > 0;
+        return !!handlers && handlers.length > 0;
     }
 
     emit = (category: MessageType, data: any, ...args: any[]) => {
