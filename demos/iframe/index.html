@@ -13,14 +13,11 @@
 
     <iframe src="./iframe1.html" id="ifr"></iframe>
     <script src="../../dist/asyncMessager.js"></script>
-
-
     <script>
 
         function sendMessage(msg) {
             iframe1.contentWindow.postMessage(msg)
         }
-
         const iframe1 = document.getElementById("ifr");
 
         const asyncMessager = new AsyncMessager.BaseAsyncMessager({
@@ -55,11 +52,9 @@
                 }
             }).then(res => console.log("index.html:", res, res))
         }
-
         asyncMessager.addHandler("timeInfo", function(data){
             console.log("index.html:timeInfo", data);
         })
-
 
 
     </script>

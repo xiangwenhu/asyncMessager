@@ -3,6 +3,9 @@
 
 ## 示例代码
 
+
+### EventEmitter
+
 ```js
 import { BaseAsyncMessager, BaseReqData, GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
@@ -73,4 +76,56 @@ emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
     console.log("continuous-event:", data);
 })
 
+```
+
+### iframe
+
+```html
+    <iframe src="./iframe1.html" id="ifr"></iframe>
+    <script src="../../dist/asyncMessager.js"></script>
+    <script>
+
+        function sendMessage(msg) {
+            iframe1.contentWindow.postMessage(msg)
+        }
+        const iframe1 = document.getElementById("ifr");
+
+        const asyncMessager = new AsyncMessager.BaseAsyncMessager({
+            // logUnhandledEvent: false,
+            subscribe(onMessage) {
+                function onIframeMessage(msg) {
+                    onMessage(msg.data);
+                }
+                window.addEventListener("message", onIframeMessage);
+                return () => {
+                    window.removeEventListener("message", onIframeMessage);
+                }
+            },
+            getReqCategory(data) {
+                console.log("asyncMessager getReqCategory: method", data.method);
+                return data.method;
+            },
+            getResCategory(data) {
+                return data.method;
+            },
+            request(data, key) {
+                sendMessage(data);
+            }
+        });
+
+        iframe1.contentWindow.onload = () => {
+            asyncMessager.invoke({
+                method: "init",
+                data: {
+                    user: 123456,
+                    token: "blabla......"
+                }
+            }).then(res => console.log("index.html:", res, res))
+        }
+        asyncMessager.addHandler("timeInfo", function(data){
+            console.log("index.html:timeInfo", data);
+        })
+
+
+    </script>
 ```
