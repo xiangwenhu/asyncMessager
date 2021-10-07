@@ -15,14 +15,12 @@
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
-
         const socket = io("http://localhost:3000");
 
         function sendMessage(msg) {
             socket.emit("message", msg)
         }
-        const iframe1 = document.getElementById("ifr");
-
+        
         const asyncMessager = new AsyncMessager.BaseAsyncMessager({
             // logUnhandledEvent: false,
             subscribe(onMessage) {
@@ -33,14 +31,7 @@
                 return () => {
                     socket.off("message", onSocketMessage);
                 }
-            },
-            getReqCategory(data) {
-                console.log("asyncMessager getReqCategory: method", data.method);
-                return data.method;
-            },
-            getResCategory(data) {
-                return data.method;
-            },
+            },    
             request(data, key) {
                 sendMessage(data);
             }
@@ -55,12 +46,11 @@
                     token: "blabla......"
                 }
             }).then(res => console.log("index.html:", res, res))
-        })
+        });
+
         asyncMessager.addHandler("timeInfo", function (data) {
             console.log("index.html:timeInfo", data);
-        })
-
-
+        });
     </script>
 
 </body>

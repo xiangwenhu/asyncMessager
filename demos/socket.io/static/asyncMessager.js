@@ -251,10 +251,14 @@
             return method(data);
         }
         getReqCategory(data) {
-            throw new Error("not implemented");
+            // throw new Error("not implemented")
+            const d = data;
+            return d.method || d.type;
         }
         getResCategory(data) {
-            throw new Error("not implemented");
+            // throw new Error("not implemented")
+            const d = data;
+            return d.method || d.type;
         }
         request(data, key) {
             throw new Error("not implemented");

@@ -131,11 +131,15 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
     }
 
     protected getReqCategory(data: R): string {
-        throw new Error("not implemented")
+        // throw new Error("not implemented")
+        const d = data as any;
+        return d.method || d.type;
     }
 
     protected getResCategory(data: S): string {
-        throw new Error("not implemented")
+        // throw new Error("not implemented")
+        const d = data as any;
+        return d.method || d.type;
     }
 
     protected request(data: R, key: string): any {

@@ -129,3 +129,47 @@ emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
 
     </script>
 ```
+
+## socket.io
+
+不到20行代码，就实现了异步编程。
+
+```js
+const socket = io("http://localhost:3000");
+
+function sendMessage(msg) {
+    socket.emit("message", msg)
+}
+
+const asyncMessager = new AsyncMessager.BaseAsyncMessager({
+    // logUnhandledEvent: false,
+    subscribe(onMessage) {
+        function onSocketMessage(msg) {
+            onMessage(msg);
+        }
+        socket.on("message", onSocketMessage);
+        return () => {
+            socket.off("message", onSocketMessage);
+        }
+    },    
+    request(data, key) {
+        sendMessage(data);
+    }
+});
+
+socket.on("connect", () => {
+    console.log("connect")
+    asyncMessager.invoke({
+        method: "getUsers",
+        data: {
+            user: 123456,
+            token: "blabla......"
+        }
+    }).then(res => console.log("index.html:", res, res))
+});
+
+asyncMessager.addHandler("timeInfo", function (data) {
+    console.log("index.html:timeInfo", data);
+});
+
+```
