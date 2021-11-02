@@ -1,7 +1,17 @@
+
+## 摘要
 异步回调转Promise通用方案。支持EventEmitter, MQTT, socket.io, iframe， webview等等场景。
 
 
+## 依赖
+其依赖了ES6的Map, 如果项目已经使用了[core-js](https://www.npmjs.com/package/core-js)，直接引用其map就行。
+
+如果仅仅单独引入Map, 建议[es6-map](github.com/medikoo/es6-map)
+
+
 ## 示例代码
+
+
 
 
 ### EventEmitter
