@@ -2,17 +2,38 @@ import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
 import { MessageType } from "./types";
 
-export interface BaseReqData<R = any, S = any> {
+export interface BaseReqData<R = any> {
+    /**
+     * 请求的唯一标记
+     */
     _key_?: string;
+    /**
+     * scope，区分多个渠道
+     */
     scope?: string;
-    decoratorMapKey?: string;
+    /**
+     * 区分类型的字段，默认是type|method 
+     */
+    type?: MessageType;
+    /**
+     * 区分类型的字段，默认是type|method 
+     */
+    method?: MessageType;
+    /**
+     * 数据部分
+     */
+    data?: R;
 }
+
+
+export type BaseResData<S = any> = BaseReqData<S>
 
 interface ReqInfo<R = any> {
     key: string;
     cb: Function;
     reqData?: R;
     reqTime?: number;
+    scope: string | undefined;
 }
 
 const DEFAULT_G_OPTIONS: GlobalReqOptions = {
@@ -36,41 +57,41 @@ export interface GlobalReqOptions<R = any, S = any> {
      * 获得请求的key
      * @param data 
      */
-    getReqkey?<R>(data: R): string;
+    getReqkey?<R>(data: BaseReqData<R>): string;
     /**
      * 获取请求的Category
      * @param data 
      */
-    getReqCategory?(data: R): MessageType;
+    getReqCategory?(data: BaseReqData<R>): MessageType;
     /**
      * 获得响应的Key
      * @param data 
      */
-    getResKey?(data: S): string
+    getResKey?(data: BaseResData<S>): string
     /**
      * 打开多个被请求方， 比如多个webview
      */
-    getResSope?: (data: S) => string | string[];
+    getResSope?: (data: BaseResData<S>) => string | string[];
     /**
      * 提供返回后，再处理数据的能力
      */
-    onReponse?: (data: S) => S;
+    onResponse?: (data: BaseResData<S>) => BaseResData<S>;
     /**
      * 获取响应的Category
      * @param data 
      */
-    getResCategory?(data: S): MessageType;
+    getResCategory?(data: BaseResData<S>): MessageType;
     /**
      * 真正的请求
      * @param data 
      * @param key 
      */
-    request?(data: R, key: string): any;
+    request?(data: BaseResData<S>, key: string): any;
     /**
      * 获取hashCode
      * @param data 
      */
-    getHashCode?(data: R): string | number;
+    getHashCode?(data: BaseReqData<R>): string | number;
     /**
      * 输出未处理的事件回调
      */
@@ -86,7 +107,7 @@ type Unsubscribe = () => void;
 
 type extensibleMethod = "subscribe" | "getReqkey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
 
-export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
+export default class BaseAsyncMessager<R = any, S = any> {
 
     private useOptions: boolean = false;
     /**
@@ -125,33 +146,33 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         throw new Error("not implemented")
     }
 
-    protected getReqkey<R>(data: R) {
+    protected getReqkey<R>(data: BaseReqData<R>) {
         const method = this.getMethod("getHashCode");
         return method!(data);
     }
 
-    protected getReqCategory(data: R): string {
+    protected getReqCategory(data: BaseReqData<R>): MessageType {
         // throw new Error("not implemented")
         const d = data as any;
         return d.method || d.type;
     }
 
-    protected getResCategory(data: S): string {
+    protected getResCategory(data: BaseResData<S>): MessageType {
         // throw new Error("not implemented")
         const d = data as any;
         return d.method || d.type;
     }
 
-    protected request(data: R, key: string): any {
+    protected request(_data: BaseReqData<R>, _key: string): any {
         throw new Error("not implemented")
     }
 
-    protected getResKey(data: S): string {
-        return (data as any)._key_;
+    protected getResKey(data: BaseResData<S>): MessageType {
+        return data._key_!;
     }
 
-    protected getResScope(data: S) {
-        return (data as any).scope;
+    protected getResScope(data: BaseResData<S>) {
+        return data.scope;
     }
 
     /**
@@ -159,11 +180,11 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
      * @param data 
      * @returns 
      */
-    protected getHashCode(data: R) {
+    protected getHashCode(data: BaseReqData<R>) {
         return util.hashcode(JSON.stringify(data))
     }
 
-    protected onResponse(_category: MessageType, data: S) {
+    protected onResponse(_category: MessageType, data: BaseResData<S>) {
         return data;
     }
 
@@ -179,7 +200,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         return method as Function;
     }
 
-    protected onMessage = (data: S) => {
+    protected onMessage = (data: BaseResData<S>) => {
         // console.log("BaseAsyncMessager::onMessage:", data);
         const category = this.getMethod("getResCategory")(data);
         const key = this.getMethod("getResKey")(data);
@@ -215,7 +236,8 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         this.cbMap.get(category)!.push({
             key: reqInfo.key,
             reqTime: Date.now(),
-            cb: reqInfo.cb
+            cb: reqInfo.cb,
+            scope: reqInfo.scope
         });
     }
 
@@ -242,7 +264,7 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         return (cbs as Array<any>).shift().cb;
     }
 
-    invoke<SS = S>(data: R, reqOptions?: ReqOptions): Promise<SS> {
+    invoke(data: BaseResData, reqOptions?: ReqOptions): Promise<BaseResData<S>> {
         this._reqCount++;
         const {
             timeout = 5000,
@@ -256,6 +278,8 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
             data._key_ = this.getMethod("getReqkey").apply(this, [data]);
         }
         const hashKey = data._key_!;
+
+        console.log("hashkey", hashKey);
 
         const tout = timeout || this._options.timeout;
         const category = this.getMethod("getReqCategory")(data);
@@ -280,8 +304,9 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
                 cb: (msg: any) => {
                     // 取消超时回调
                     cancel();
-                    resolve(msg as SS);
-                }
+                    resolve(msg);
+                },
+                scope: data.scope
             });
             // 调用
             this.getMethod("request")(data, hashKey);
@@ -293,8 +318,8 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
         if (!cbs) {
             return undefined;
         }
-
-        const index = cbs.findIndex(c => c.key === key && c?.reqData?.scope == scope);
+ 
+        const index = cbs.findIndex(c => c.key === key && c?.scope == scope);
         if (index < 0) {
             return undefined;
         }
@@ -311,11 +336,11 @@ export default class BaseAsyncMessager<R extends BaseReqData, S = any> {
 
     }
 
-    private onSuccess = (category: MessageType, data: S) => {
+    private onSuccess = (category: MessageType, data: BaseResData<S>) => {
         this._resCount++;
     }
 
-    protected onBuiltInResponse(category: MessageType, data: S) {
+    protected onBuiltInResponse(category: MessageType, data: BaseResData<S>) {
         if (this.passiveEventMessager) {
             this.passiveEventMessager.emit(category, data);
         }

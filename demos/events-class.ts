@@ -3,10 +3,7 @@ import EventEmitter from "events";
 
 const emitter = new EventEmitter();
 
-interface RequestData extends BaseReqData {
-    method: string;
-    data?: any;
-}
+type RequestData  = BaseReqData;
 type ResponseData = RequestData;
 
 class EmitterAsyncMessager extends BaseAsyncMessager<RequestData, ResponseData> {
@@ -25,11 +22,11 @@ class EmitterAsyncMessager extends BaseAsyncMessager<RequestData, ResponseData> 
 
     protected getReqCategory(data: RequestData) {
         console.log("WebViewBridge getReqCategory: method", data.method);
-        return data.method;
+        return data.method!;
     }
 
     protected getResCategory(data: ResponseData) {
-        return data.method;
+        return data.method!;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

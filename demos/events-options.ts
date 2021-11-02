@@ -1,17 +1,11 @@
-import { BaseAsyncMessager, BaseReqData, GlobalReqOptions } from "../src/index";
+import { BaseAsyncMessager, BaseReqData, BaseResData,  GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
 
 const emitter = new EventEmitter();
 
-interface RequestData extends BaseReqData {
-    method: number | string | Symbol;
-    data?: any;
-}
-type ResponseData = RequestData;
-
 
 // 初始化异步Messager
-const emitterAsyncMessager = new BaseAsyncMessager<RequestData>({
+const emitterAsyncMessager = new BaseAsyncMessager<any>({
     // logUnhandledEvent: false,
     subscribe(onMessage) {
         console.log("emitterAsyncMessager: subscribe");
@@ -20,14 +14,14 @@ const emitterAsyncMessager = new BaseAsyncMessager<RequestData>({
             emitter.off("message", onMessage  as any);
         }
     },
-    getReqCategory(data: RequestData) {
+    getReqCategory(data: BaseReqData) {
         console.log("emitterAsyncMessager： getReqCategory: method", data.method);
-        return data.method;
+        return data.method!;
     },
-    getResCategory(data: ResponseData) {
-        return data.method;
+    getResCategory(data: BaseResData) {
+        return data.method!;
     },
-    request(data: RequestData, key?: string) {
+    request(data: BaseReqData, key?: string) {
         emitter.emit("message-request", data);
     }
 });
@@ -48,11 +42,11 @@ setInterval(() => {
 }, 3000)
 
 // 监听 message-request 事件，然后回发事件
-emitter.on("message-request", (data: RequestData) => {
+emitter.on("message-request", (data: BaseReqData) => {
     setTimeout(() => {
         emitter.emit("message", {
             method: data.method,
-            data: `${data.method.toString()}--- data`
+            data: `${data.method!.toString()}--- data`
         })
     }, 3000)
 })
@@ -73,8 +67,8 @@ emitterAsyncMessager.addHandler(symbolCccc, function onEvent(data) {
 
 
 // 传统的监听事件
-// emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
-//     console.log("continuous-event:", data);
-// })
+emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
+    console.log("continuous-event:", data);
+})
 
 
