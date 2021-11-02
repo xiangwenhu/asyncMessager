@@ -1,40 +1,6 @@
 import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
-import { MessageType } from "./types";
-
-export interface BaseReqData<R = any> {
-    /**
-     * 请求的唯一标记
-     */
-    _key_?: string;
-    /**
-     * scope，区分多个渠道
-     */
-    scope?: string;
-    /**
-     * 区分类型的字段，默认是type|method 
-     */
-    type?: MessageType;
-    /**
-     * 区分类型的字段，默认是type|method 
-     */
-    method?: MessageType;
-    /**
-     * 数据部分
-     */
-    data?: R;
-}
-
-
-export type BaseResData<S = any> = BaseReqData<S>
-
-interface ReqInfo<R = any> {
-    key: string;
-    cb: Function;
-    reqData?: R;
-    reqTime?: number;
-    scope: string | undefined;
-}
+import { BaseReqData, BaseResData, MessageType, ReqInfo } from "./types";
 
 const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     timeout: 5000,
@@ -114,12 +80,10 @@ export default class BaseAsyncMessager<R = any, S = any> {
      * 请求的次数
      */
     private _reqCount = 0;
-
     /**
      * 响应的次数
      */
     private _resCount = 0;
-
     /**
      * 超时的数量
      */
@@ -136,7 +100,6 @@ export default class BaseAsyncMessager<R = any, S = any> {
         this._options = { ...DEFAULT_G_OPTIONS, ...options };
 
         if (util.isFunction(this._options.subscribe)) {
-            // 订阅
             this.unsubscribe = this._options.subscribe!(this.onMessage)
         }
         this.useOptions = true;
@@ -152,15 +115,11 @@ export default class BaseAsyncMessager<R = any, S = any> {
     }
 
     protected getReqCategory(data: BaseReqData<R>): MessageType {
-        // throw new Error("not implemented")
-        const d = data as any;
-        return d.method || d.type;
+        return data.method || data.type;
     }
 
     protected getResCategory(data: BaseResData<S>): MessageType {
-        // throw new Error("not implemented")
-        const d = data as any;
-        return d.method || d.type;
+        return data.method || data.type;
     }
 
     protected request(_data: BaseReqData<R>, _key: string): any {
@@ -189,7 +148,6 @@ export default class BaseAsyncMessager<R = any, S = any> {
     }
 
     private getMethod = (name: extensibleMethod) => {
-
         const optMethod = this._options[name as keyof GlobalReqOptions];
         const classMethod = this[name as keyof this];
 
@@ -201,7 +159,6 @@ export default class BaseAsyncMessager<R = any, S = any> {
     }
 
     protected onMessage = (data: BaseResData<S>) => {
-        // console.log("BaseAsyncMessager::onMessage:", data);
         const category = this.getMethod("getResCategory")(data);
         const key = this.getMethod("getResKey")(data);
 
@@ -277,10 +234,7 @@ export default class BaseAsyncMessager<R = any, S = any> {
         if (!util.hasOwnProperty(data, "_key_")) {
             data._key_ = this.getMethod("getReqkey").apply(this, [data]);
         }
-        const hashKey = data._key_!;
-
-        console.log("hashkey", hashKey);
-
+        const hashKey = data._key_;
         const tout = timeout || this._options.timeout;
         const category = this.getMethod("getReqCategory")(data);
 
@@ -313,7 +267,7 @@ export default class BaseAsyncMessager<R = any, S = any> {
         });
     }
 
-    private removeReqInfo(category: MessageType, scope: string, key: string) {
+    private removeReqInfo(category: MessageType, scope: string, key: string | undefined) {
         const cbs = this.cbMap.get(category);
         if (!cbs) {
             return undefined;
@@ -332,9 +286,7 @@ export default class BaseAsyncMessager<R = any, S = any> {
         this._timeOutCount++;
     }
 
-    private onError = () => {
-
-    }
+    private onError = () => {}
 
     private onSuccess = (category: MessageType, data: BaseResData<S>) => {
         this._resCount++;
@@ -369,7 +321,6 @@ export default class BaseAsyncMessager<R = any, S = any> {
         if (this.unsubscribe) {
             this.unsubscribe();
             this.cbMap.clear();
-            // this.cbMap = null;
         }
     }
 }
