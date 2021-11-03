@@ -5,3 +5,5 @@
 - [ ] 支持once
 - [ ] 支持scope
 - [ ] 重写和分离统计
+- [ ] 分离callbacks的存储
+- [ ] ES5的支持，不通过Map的polyfill

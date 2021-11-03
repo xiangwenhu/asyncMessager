@@ -1,6 +1,6 @@
 import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
-import { BaseReqData, BaseResData, MessageType, ReqInfo } from "./types";
+import { BaseReqData, BaseResData, GlobalReqOptions, MessageType, ReqInfo, ReqOptions, Unsubscribe } from "./types";
 
 const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     timeout: 5000,
@@ -9,67 +9,6 @@ const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     enableLog: true,
     logUnhandledEvent: true,
 };
-
-export interface GlobalReqOptions<R = any, S = any> {
-    timeout?: number;
-    autoSubscribe?: boolean;
-    clearTimeoutReq?: boolean;
-    enableLog?: boolean;
-    /**
-     * 订阅
-     */
-    subscribe?(onMessage?: Function): Unsubscribe;
-    /**
-     * 获得请求的key
-     * @param data 
-     */
-    getReqkey?<R>(data: BaseReqData<R>): string;
-    /**
-     * 获取请求的Category
-     * @param data 
-     */
-    getReqCategory?(data: BaseReqData<R>): MessageType;
-    /**
-     * 获得响应的Key
-     * @param data 
-     */
-    getResKey?(data: BaseResData<S>): string
-    /**
-     * 打开多个被请求方， 比如多个webview
-     */
-    getResSope?: (data: BaseResData<S>) => string | string[];
-    /**
-     * 提供返回后，再处理数据的能力
-     */
-    onResponse?: (data: BaseResData<S>) => BaseResData<S>;
-    /**
-     * 获取响应的Category
-     * @param data 
-     */
-    getResCategory?(data: BaseResData<S>): MessageType;
-    /**
-     * 真正的请求
-     * @param data 
-     * @param key 
-     */
-    request?(data: BaseResData<S>, key: string): any;
-    /**
-     * 获取hashCode
-     * @param data 
-     */
-    getHashCode?(data: BaseReqData<R>): string | number;
-    /**
-     * 输出未处理的事件回调
-     */
-    logUnhandledEvent?: boolean;
-}
-
-export interface ReqOptions {
-    timeout?: number;
-    defaultRes?: any;
-}
-
-type Unsubscribe = () => void;
 
 type extensibleMethod = "subscribe" | "getReqkey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
 

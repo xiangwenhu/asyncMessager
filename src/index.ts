@@ -1,10 +1,10 @@
 export {
     default as BaseAsyncMessager,
-    GlobalReqOptions,
-    ReqOptions
 } from "./BaseAsyncMessager";
 
 export {
+    GlobalReqOptions,
+    ReqOptions,
     BaseReqData,
     BaseResData,
 } from "./types"
