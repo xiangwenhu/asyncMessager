@@ -8,6 +8,8 @@ export interface BaseReqData<R = any> {
     _key_?: string;
     /**
      * scope，区分多个渠道
+     * 比如页面打开多个iframe，我们监听的是window的message的事件，
+     * 当多个iframe发送出消息时，屏蔽消息
      */
     scope?: string;
     /**
@@ -41,7 +43,15 @@ export interface GlobalReqOptions<R = any, S = any> {
     timeout?: number;
     autoSubscribe?: boolean;
     clearTimeoutReq?: boolean;
+    /**
+     * clearTimeoutReq开启后，过期多少时间的请求会被清理
+     */
+    expiredTime?: number;
     enableLog?: boolean;
+    /**
+     * 输出未处理的事件回调
+     */
+    logUnhandledEvent?: boolean;
     /**
      * 订阅
      */
@@ -85,10 +95,6 @@ export interface GlobalReqOptions<R = any, S = any> {
      * @param data 
      */
     getHashCode?(data: BaseReqData<R>): string | number;
-    /**
-     * 输出未处理的事件回调
-     */
-    logUnhandledEvent?: boolean;
 }
 
 

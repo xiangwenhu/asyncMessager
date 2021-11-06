@@ -1,6 +1,7 @@
 import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
 import { BaseReqData, BaseResData, GlobalReqOptions, MessageType, ReqInfo, ReqOptions, Unsubscribe } from "./types";
+import { isSameScope } from "./util";
 
 const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     timeout: 5000,
@@ -138,29 +139,14 @@ export default class BaseAsyncMessager<R = any, S = any> {
     }
 
     private getCallback(category: MessageType, scope: string, key: string) {
-        const cbs = this.cbMap.get(category);
-        if (!cbs) {
+        const reqInfo = this.removeReqInfo(category, scope, key);
+        if (!reqInfo) {
             return undefined;
         }
-
-        if (typeof key === "string") {
-            const reqInfo = this.removeReqInfo(category, scope, key);
-            if (!reqInfo) {
-                return undefined;
-            }
-            return reqInfo.cb;
-        }
-
-        // TODO:: scope
-        if (!cbs || cbs.length == 0) {
-            return undefined;
-        }
-
-        // 返回第一个
-        return (cbs as Array<any>).shift().cb;
+        return reqInfo.cb;
     }
 
-    invoke(data: BaseResData, reqOptions?: ReqOptions): Promise<BaseResData<S>> {
+    invoke(data: BaseResData, reqOptions?: ReqOptions, ...args: any[]): Promise<BaseResData<S>> {
         this._reqCount++;
         const {
             timeout = 5000,
@@ -202,30 +188,37 @@ export default class BaseAsyncMessager<R = any, S = any> {
                 scope: data.scope
             });
             // 调用
-            this.getMethod("request")(data, hashKey);
+            this.getMethod("request")(data, hashKey, ...args);
         });
     }
 
     private removeReqInfo(category: MessageType, scope: string, key: string | undefined) {
         const cbs = this.cbMap.get(category);
-        if (!cbs) {
+        if (!cbs || cbs.length === 0) {
             return undefined;
         }
- 
-        const index = cbs.findIndex(c => c.key === key && c?.scope == scope);
-        if (index < 0) {
+
+        // 精确查找, TODO:: 更加精细
+        if (typeof scope === "string" || typeof key === "string") {
+            const index = cbs.findIndex(c => c.key === key && isSameScope(c?.scope, scope))
+            if (index >= 0) {
+                const reqInfo = cbs[index];
+                cbs.splice(index, 1);
+                return reqInfo;
+            }
             return undefined;
         }
-        const reqInfo = cbs[index];
-        cbs.splice(index, 1);
-        return reqInfo;
+
+        // 删除第一个
+        return cbs.shift();
+
     }
 
     private onTimeout = () => {
         this._timeOutCount++;
     }
 
-    private onError = () => {}
+    private onError = () => { }
 
     private onSuccess = (category: MessageType, data: BaseResData<S>) => {
         this._resCount++;
