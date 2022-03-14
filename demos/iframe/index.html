@@ -13,7 +13,7 @@
 
     <iframe src="./iframe1.html" id="ifr"></iframe>
     <iframe src="./iframe2.html" id="ifr2"></iframe>
-    <script src="../../dist/asyncMessager.js"></script>
+    <script src="../../lib/asyncMessager.js"></script>
     <script>
 
         const iframe1 = document.getElementById("ifr");
@@ -51,7 +51,7 @@
         iframe1.contentWindow.onload = () => {
             asyncMessager.invoke({
                 method: "init",
-                // scope: "iframe1",
+                scope: "iframe1",
                 data: {
                     user: 123456,
                     token: "blabla......",
@@ -64,7 +64,7 @@
         iframe2.contentWindow.onload = () => {
             asyncMessager.invoke({
                 method: "init",
-                // scope: "iframe2",
+                scope: "iframe2",
                 data: {
                     user: 123456,
                     token: "blabla......"

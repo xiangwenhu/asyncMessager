@@ -26,13 +26,14 @@
                 case "init":
                     setTimeout(() => {
                         top.postMessage({
+                            scope: "iframe1",
                             method: "init",
                             data: {
                                 isOk: true,
                                 source: "iframe1"
                             }
                         })
-                    }, 2000)
+                    }, 3000)
                     break;
                 default:
                     break;
