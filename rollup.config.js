@@ -13,7 +13,7 @@ export default {
   input: "src/index.ts",
   output: {
     name: "AsyncMessager",
-    file: "dist/asyncMessager.js",
+    file: "lib/asyncMessager.js",
     format: "umd",
   },
 

@@ -11,8 +11,8 @@
       "ES2015",
     ],
     "sourceMap": true,
-    /* "declaration": true,  
-    "declarationDir": ".", */
+    "declaration": true,  
+    // "declarationDir": "",
     "outDir": "./dist", /* Redirect output structure to the directory. */
     "rootDir": "./src", /* Specify the root directory of input files. Use to control the output directory structure with 
     /* Strict Type-Checking Options */

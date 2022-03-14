@@ -40,14 +40,14 @@ export function delay(fn: Function = () => { }, delay: number = 5000, context: u
         }
     }
     let ticket: any;
-    let runned = false;
+    let executed = false;
     return {
         run(...args: any[]) {
             return new Promise((resolve, reject) => {
-                if (runned === true) {
+                if (executed === true) {
                     return;
                 }
-                runned = true;
+                executed = true;
                 ticket = setTimeout(async () => {
                     try {
                         const res = await fn.apply(context, args);
