@@ -11,7 +11,7 @@ const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     logUnhandledEvent: true,
 };
 
-type extensibleMethod = "subscribe" | "getReqkey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
+type extensibleMethod = "subscribe" | "getReqKey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
 
 export default class BaseAsyncMessager<R = any, S = any> {
 
@@ -49,7 +49,7 @@ export default class BaseAsyncMessager<R = any, S = any> {
         throw new Error("not implemented")
     }
 
-    protected getReqkey<R>(data: BaseReqData<R>) {
+    protected getReqKey<R>(data: BaseReqData<R>) {
         const method = this.getMethod("getHashCode");
         return method!(data);
     }
@@ -106,14 +106,14 @@ export default class BaseAsyncMessager<R = any, S = any> {
         // 提供自定义助力数据的能力
         data = this.getMethod("onResponse")(category, data);
 
-        const isInHanlders = this.passiveEventMessager.has(category);
+        const isInHandlers = this.passiveEventMessager.has(category);
         // 内置的成功处理
         this.onBuiltInResponse(category, data);
 
         const callback = this.getCallback(category, scope, key);
 
         //  AsyncMessager中没有，PEventMessager中也没有, 并且开启相关的日志输出
-        if (!callback && !isInHanlders && this._options.logUnhandledEvent) {
+        if (!callback && !isInHandlers && this._options.logUnhandledEvent) {
             this.onError();
             console.warn(`未找到category为${category},key为${key}的回调信息`);
             return;
@@ -146,10 +146,11 @@ export default class BaseAsyncMessager<R = any, S = any> {
         return reqInfo.cb;
     }
 
-    invoke(data: BaseResData, reqOptions?: ReqOptions, ...args: any[]): Promise<BaseResData<S>> {
+    invoke(data: BaseResData, reqOptions?: ReqOptions, ...args: any[]): Promise<BaseResData<S> | null> {
         this._reqCount++;
         const {
             timeout = 5000,
+            oneway = false,
             defaultRes = {
                 message: "请求超时"
             }
@@ -162,6 +163,12 @@ export default class BaseAsyncMessager<R = any, S = any> {
         const hashKey = data._key_;
         const tout = timeout || this._options.timeout;
         const category = this.getMethod("getReqCategory")(data);
+
+        // 只发不收
+        if (oneway) {
+            this.getMethod("request")(data, hashKey, ...args);
+            return Promise.resolve(null)
+        }
 
         return new Promise((resolve, reject) => {
             const { run, cancel } = util.delay(undefined, tout);

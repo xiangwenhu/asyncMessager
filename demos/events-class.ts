@@ -50,6 +50,11 @@ setInterval(() => {
 
 emitter.on("message-request", (data: RequestData) => {
 
+    // 单向的，不回发消息
+    if(data.method === "oneway"){
+        return;
+    }
+
     setTimeout(() => {
         emitter.emit("message", {
             method: data.method,
@@ -64,6 +69,14 @@ emitterAsyncMessager.invoke({
     method: "cccc",
     data: 111
 }).then(res => console.log("res:", res))
+
+
+emitterAsyncMessager.invoke({
+    method: "oneway",
+    data: 111
+}, {
+    oneway: true,
+}).then(res => console.log("oneway request res:", res))
 
 
 emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {

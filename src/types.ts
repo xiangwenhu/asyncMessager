@@ -101,4 +101,5 @@ export interface GlobalReqOptions<R = any, S = any> {
 export interface ReqOptions {
     timeout?: number;
     defaultRes?: any;
+    oneway?: boolean;
 }
