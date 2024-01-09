@@ -9,7 +9,7 @@ emitter.on("message-request", function (data: BaseReqData) {
             setTimeout(function () {
                 emitter.emit("message", {
                     method: data.method,
-                    _key_: data._key_,
+                    requestId: data.requestId,
                     data: `res_method1`
                 })
             }, Math.random() * 2000)
@@ -45,12 +45,12 @@ emitterAsyncMessager.subscribe();
 emitterAsyncMessager.invoke({
     method: "method1",
     data: "data2",
-    _key_: "key2"
+    requestId: "key2"
 }).then(res=>console.log("res1_key2", res));
 
 emitterAsyncMessager.invoke({
     method: "method1",
     data: "data1",
-    _key_: "key1"
+    requestId: "key1"
 }).then(res=>console.log("res_key1", res));
 

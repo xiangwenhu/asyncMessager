@@ -34,11 +34,11 @@
                     window.removeEventListener("message", onIframeMessage);
                 }
             },
-            getReqCategory(data) {
+            getReqMsgType(data) {
                 console.log(`asyncMessager getReqCategory: method=${data.method} scope=${data.scope}`);
                 return data.method;
             },
-            getResCategory(data) {
+            getResMsgType(data) {
                 return data.method;
             },
             request(data, key, iframe) {
@@ -56,7 +56,7 @@
                     user: 123456,
                     token: "blabla......",
                 }
-            }, {}, iframe1).then(res => console.log(`rq iframe1 , message from ${res.data.source}.html:`, res, res))
+            }, {}, iframe1).then(res => console.log(`iframe1 , message from ${res.data.source}.html:`,  res))
         }
 
 
@@ -69,7 +69,7 @@
                     user: 123456,
                     token: "blabla......"
                 }
-            }, {}, iframe2).then(res => console.log(`rq iframe2 ,message from ${res.data.source}.html:`, res, res))
+            }, {}, iframe2).then(res => console.log(`iframe2 ,message from ${res.data.source}.html:`,  res))
         }
 
         // 没有scope

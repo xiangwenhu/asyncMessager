@@ -4,6 +4,84 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.AsyncMessager = {}));
 })(this, (function (exports) { 'use strict';
 
+    class PEventMessager {
+        constructor() {
+            this._map = new Map();
+            /**
+             * 可以处理多种类型的事件
+             * @param messageType
+             * @returns
+             */
+            this.on = (messageType, listener, context = null) => {
+                const cates = Array.isArray(messageType) ? messageType : [messageType];
+                const map = this._map;
+                if (typeof listener !== "function") {
+                    return console.error(`PassiveEventMessager::addHandler: fn 必须是一个函数`);
+                }
+                cates.forEach(cate => {
+                    let handlers = map.get(cate);
+                    if (handlers == undefined) {
+                        handlers = [];
+                        map.set(cate, handlers);
+                    }
+                    handlers.push({
+                        methodName: listener.name || "anonymous",
+                        target: context,
+                        listener
+                    });
+                });
+            };
+            this.off = (messageType, listener) => {
+                console.log("removeHander:", messageType);
+                const cates = Array.isArray(messageType) ? messageType : [messageType];
+                const map = this._map;
+                if (typeof listener !== "function") {
+                    return console.error(`PassiveEventMessager::removeHandler: fn 必须是一个函数`);
+                }
+                let cate;
+                for (let i = 0; i < cates.length; i++) {
+                    cate = cates[i];
+                    const handlers = map.get(cate);
+                    if (handlers == undefined || !Array.isArray(handlers)) {
+                        continue;
+                    }
+                    let index;
+                    for (let i = handlers.length; i >= 0; i--) {
+                        index = handlers.findIndex(h => h.listener === listener);
+                        if (index >= 0) {
+                            handlers.splice(index, 1);
+                            break;
+                        }
+                    }
+                    // handlers 长度为0，删除分类
+                    if (handlers.length == 0) {
+                        map.delete(cate);
+                    }
+                }
+            };
+            this.emit = (messageType, data, ...args) => {
+                const handlers = this._map.get(messageType);
+                if (handlers == undefined) {
+                    return;
+                }
+                // console.log("handlers", handlers.length, handlers);
+                handlers.forEach(handler => {
+                    const { listener: fun } = handler;
+                    if (!fun) {
+                        console.error(`PassiveEventMessager:不能找到category为${messageType}对应的${handler.methodName}事件处理函数`);
+                    }
+                    else {
+                        fun.apply(handler.target, [data].concat(args));
+                    }
+                });
+            };
+        }
+        has(messageType) {
+            const handlers = this._map.get(messageType);
+            return !!handlers && handlers.length > 0;
+        }
+    }
+
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation.
 
@@ -30,22 +108,6 @@
     }
 
     const { hasOwnProperty: hasOwn } = Object.prototype;
-    /* eslint-disable no-bitwise */
-    /* eslint-disable no-shadow */
-    function hashcode(str = "") {
-        let hash = 0;
-        let i;
-        let chr;
-        let len;
-        if (str.length === 0)
-            return hash;
-        for (i = 0, len = str.length; i < len; i++) {
-            chr = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + chr;
-            hash |= 0; // Convert to 32bit integer
-        }
-        return hash;
-    }
     function isFunction(fn) {
         return typeof fn === 'function';
     }
@@ -65,14 +127,14 @@
             };
         }
         let ticket;
-        let runned = false;
+        let executed = false;
         return {
             run(...args) {
                 return new Promise((resolve, reject) => {
-                    if (runned === true) {
+                    if (executed === true) {
                         return;
                     }
-                    runned = true;
+                    executed = true;
                     ticket = setTimeout(() => __awaiter(this, void 0, void 0, function* () {
                         try {
                             const res = yield fn.apply(context, args);
@@ -92,113 +154,40 @@
     function hasOwnProperty(obj, property) {
         return hasOwn.call(obj, property);
     }
-
-    /* eslint-disable @typescript-eslint/interface-name-prefix */
-    class PEventMessager {
-        constructor() {
-            this._map = new Map();
-            /**
-             * 可以处理多种类型的事件
-             * @param category
-             * @returns
-             */
-            this.addHandler = (category, listener, context = null) => {
-                const cates = Array.isArray(category) ? category : [category];
-                const map = this._map;
-                if (typeof listener !== "function") {
-                    return console.error(`PassiveEventMessager::addHandler: fn 必须是一个函数`);
-                }
-                cates.forEach(cate => {
-                    let handlers = map.get(cate);
-                    if (handlers == undefined) {
-                        handlers = [];
-                        map.set(cate, handlers);
-                    }
-                    handlers.push({
-                        methodName: listener.name || "anonymous",
-                        target: context,
-                        listener
-                    });
-                });
-            };
-            this.removeHandler = (category, listener) => {
-                console.log("removeHander:", category);
-                const cates = Array.isArray(category) ? category : [category];
-                const map = this._map;
-                if (typeof listener !== "function") {
-                    return console.error(`PassiveEventMessager::removeHandler: fn 必须是一个函数`);
-                }
-                let cate;
-                for (let i = 0; i < cates.length; i++) {
-                    cate = cates[i];
-                    const handlers = map.get(cate);
-                    if (handlers == undefined || !Array.isArray(handlers)) {
-                        continue;
-                    }
-                    let index;
-                    for (let i = handlers.length; i >= 0; i--) {
-                        index = handlers.findIndex(h => h.listener === listener);
-                        if (index >= 0) {
-                            handlers.splice(index, 1);
-                            break;
-                        }
-                    }
-                    // handlers 长度为0，删除分类
-                    if (handlers.length == 0) {
-                        map.delete(cate);
-                    }
-                }
-            };
-            this.emit = (category, data, ...args) => {
-                // console.log("PassiveEventMessager::onMessage", category, data);
-                const handlers = this._map.get(category);
-                if (handlers == undefined) {
-                    return;
-                }
-                // console.log("handlers", handlers.length, handlers);
-                handlers.forEach(handler => {
-                    const { listener: fun } = handler;
-                    if (!fun) {
-                        console.error(`PassiveEventMessager:不能找到category为${category}对应的${handler.methodName}事件处理函数`);
-                    }
-                    else {
-                        fun.apply(handler.target, [data].concat(args));
-                    }
-                });
-            };
+    function isSameScope(scope1, scope2) {
+        // TODO:
+        return scope1 == scope2;
+    }
+    function uuid() {
+        var d = new Date().getTime();
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+            d += performance.now(); //use high-precision timer if available
         }
-        has(category) {
-            const handlers = this._map.get(category);
-            return !!handlers && handlers.length > 0;
-        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
     }
 
-    const DEFAULT_G_OPTIONS = {
+    const DEFAULT_GLOBAL_OPTIONS = {
         timeout: 5000,
         clearTimeoutReq: true,
-        // autoSubscribe: false,
         enableLog: true,
         logUnhandledEvent: true,
     };
-    class BaseAsyncMessager {
-        constructor(options = DEFAULT_G_OPTIONS, passiveEventMessager = new PEventMessager()) {
-            this.passiveEventMessager = passiveEventMessager;
+    class BaseAsyncMessager extends PEventMessager {
+        constructor(options = DEFAULT_GLOBAL_OPTIONS) {
+            super();
             this.useOptions = false;
-            /**
-             * 请求的次数
-             */
-            this._reqCount = 0;
-            /**
-             * 响应的次数
-             */
-            this._resCount = 0;
-            /**
-             * 超时的数量
-             */
-            this._timeOutCount = 0;
+            this.statistics = {
+                reqCount: 0,
+                resCount: 0,
+                timeOutCount: 0
+            };
             this.cbMap = new Map();
             this.getMethod = (name) => {
-                const optMethod = this._options[name];
+                const optMethod = this.options[name];
                 const classMethod = this[name];
                 const method = this.useOptions ? optMethod || classMethod : classMethod || optMethod;
                 if (!method) {
@@ -206,182 +195,179 @@
                 }
                 return method;
             };
-            this.onMessage = (data) => {
-                // console.log("BaseAsyncMessager::onMessage:", data);
-                const category = this.getMethod("getResCategory")(data);
-                const key = this.getMethod("getResKey")(data);
-                const scope = this.getMethod("getResScope")(data);
+            this.onMessage = (data = {}) => {
+                const messageType = this.getMethod("getResMsgType")(data);
+                const responseId = this.getMethod("getResponseId")(data);
                 // 提供自定义助力数据的能力
-                data = this.getMethod("onResponse")(category, data);
-                const isInHanlders = this.passiveEventMessager.has(category);
+                data = this.onResponse(messageType, data);
                 // 内置的成功处理
-                this.onBuiltInResponse(category, data);
-                const callback = this.getCallback(category, scope, key);
+                this.onBuiltInResponse(messageType, data);
+                const scope = this.getMethod("getResScope")(data);
+                const callback = this.getCallback(messageType, scope, responseId);
+                const isInHandlers = this.has(messageType);
                 //  AsyncMessager中没有，PEventMessager中也没有, 并且开启相关的日志输出
-                if (!callback && !isInHanlders && this._options.logUnhandledEvent) {
+                if (!callback && !isInHandlers && this.options.logUnhandledEvent) {
                     this.onError();
-                    console.warn(`未找到category为${category},key为${key}的回调信息`);
+                    console.warn(`未找到category为${messageType},key为${responseId}的回调信息`);
                     return;
                 }
-                this.onSuccess(category, data);
+                this.onSuccess(messageType, data);
                 if (callback) {
                     callback(data);
                 }
             };
             this.onTimeout = () => {
-                this._timeOutCount++;
+                this.statistics.timeOutCount++;
             };
-            this.onError = () => {
+            this.onError = () => { };
+            this.onSuccess = (_messageType, data) => {
+                this.statistics.resCount++;
             };
-            this.onSuccess = (category, data) => {
-                this._resCount++;
-            };
-            this._options = Object.assign(Object.assign({}, DEFAULT_G_OPTIONS), options);
-            if (isFunction(this._options.subscribe)) {
-                // 订阅
-                this.unsubscribe = this._options.subscribe(this.onMessage);
+            this.options = Object.assign(Object.assign({}, DEFAULT_GLOBAL_OPTIONS), options);
+            if (isFunction(this.options.subscribe)) {
+                this.unsubscribe = this.options.subscribe(this.onMessage);
             }
             this.useOptions = true;
         }
         subscribe(onMessage) {
             throw new Error("not implemented");
         }
-        getReqkey(data) {
-            const method = this.getMethod("getHashCode");
-            return method(data);
+        /**
+         * 获取请求的key
+         * @param data
+         * @returns
+         */
+        getRequestId(_data) {
+            return uuid();
         }
-        getReqCategory(data) {
-            // throw new Error("not implemented")
-            const d = data;
-            return d.method || d.type;
+        getReqMsgType(data) {
+            return data.method || data.type;
         }
-        getResCategory(data) {
-            // throw new Error("not implemented")
-            const d = data;
-            return d.method || d.type;
+        getResMsgType(data) {
+            return data.method || data.type;
         }
-        request(data, key) {
+        request(_data, _key) {
             throw new Error("not implemented");
         }
-        getResKey(data) {
-            return data._key_;
+        getResponseId(data) {
+            return data.requestId;
         }
         getResScope(data) {
             return data.scope;
         }
-        /**
-         * 计算hashCode
-         * @param data
-         * @returns
-         */
-        getHashCode(data) {
-            return hashcode(JSON.stringify(data));
-        }
-        onResponse(_category, data) {
+        onResponse(_messageType, data) {
             return data;
         }
-        addCallback(category, reqInfo) {
-            const cbs = this.cbMap.get(category);
+        addCallback(messageType, reqInfo) {
+            const cbs = this.cbMap.get(messageType);
             if (!cbs) {
-                this.cbMap.set(category, []);
+                this.cbMap.set(messageType, []);
             }
-            this.cbMap.get(category).push({
-                key: reqInfo.key,
+            this.cbMap.get(messageType).push({
+                requestId: reqInfo.requestId,
                 reqTime: Date.now(),
-                cb: reqInfo.cb
+                cb: reqInfo.cb,
+                scope: reqInfo.scope
             });
         }
-        getCallback(category, scope, key) {
-            const cbs = this.cbMap.get(category);
-            if (!cbs) {
+        getCallback(messageType, scope, requestId) {
+            if (messageType == undefined)
+                return undefined;
+            const reqInfo = this.removeRequest(messageType, scope, requestId);
+            if (!reqInfo) {
                 return undefined;
             }
-            if (typeof key === "string") {
-                const reqInfo = this.removeReqInfo(category, scope, key);
-                if (!reqInfo) {
-                    return undefined;
-                }
-                return reqInfo.cb;
-            }
-            // TODO:: scope
-            if (!cbs || cbs.length == 0) {
-                return undefined;
-            }
-            // 返回第一个
-            return cbs.shift().cb;
+            return reqInfo.cb;
         }
-        invoke(data, reqOptions) {
-            this._reqCount++;
-            const { timeout = 5000, defaultRes = {
+        invoke(data, reqOptions, ...args) {
+            this.statistics.reqCount++;
+            const { timeout = 5000, sendOnly = false, defaultRes = {
                 message: "请求超时"
             } } = reqOptions || {};
-            // 获得key值
-            if (!hasOwnProperty(data, "_key_")) {
-                data._key_ = this.getMethod("getReqkey").apply(this, [data]);
+            // 获得请求唯一ID
+            if (!hasOwnProperty(data, "requestId")) {
+                data.requestId = this.getMethod("getRequestId").apply(this, [data]);
             }
-            const hashKey = data._key_;
-            const tout = timeout || this._options.timeout;
-            const category = this.getMethod("getReqCategory")(data);
+            const requestId = data.requestId;
+            const tout = timeout || this.options.timeout;
+            const messageType = this.getMethod("getReqMsgType")(data);
+            // 只发不收
+            if (sendOnly) {
+                this.getMethod("request")(data, requestId, ...args);
+                return Promise.resolve(undefined);
+            }
+            if (messageType == undefined) {
+                return Promise.reject(new Error(`messageType is undefined`));
+            }
             return new Promise((resolve, reject) => {
                 const { run, cancel } = delay(undefined, tout);
                 // 超时
                 run().then(() => {
-                    console.log("请求超时:", category, data, hashKey);
+                    console.log("请求超时:", messageType, data, requestId);
                     this.onTimeout();
-                    if (this._options.clearTimeoutReq) {
-                        this.removeReqInfo(category, data === null || data === void 0 ? void 0 : data.scope, hashKey);
+                    if (this.options.clearTimeoutReq) {
+                        this.removeRequest(messageType, data === null || data === void 0 ? void 0 : data.scope, requestId);
                     }
                     reject(Object.assign({ message: "请求超时" }, (defaultRes || {})));
                 });
-                this.addCallback(category, {
-                    key: hashKey,
+                this.addCallback(messageType, {
+                    requestId: requestId,
                     cb: (msg) => {
                         // 取消超时回调
                         cancel();
                         resolve(msg);
-                    }
+                    },
+                    scope: data.scope
                 });
                 // 调用
-                this.getMethod("request")(data, hashKey);
+                this.getMethod("request")(data, requestId, ...args);
             });
         }
-        removeReqInfo(category, scope, key) {
-            const cbs = this.cbMap.get(category);
-            if (!cbs) {
+        removeRequest(messageType, scope, requestId) {
+            const cbs = this.cbMap.get(messageType);
+            if (!cbs || cbs.length === 0) {
                 return undefined;
             }
-            const index = cbs.findIndex(c => { var _a; return c.key === key && ((_a = c === null || c === void 0 ? void 0 : c.reqData) === null || _a === void 0 ? void 0 : _a.scope) == scope; });
-            if (index < 0) {
+            const hasKey = typeof requestId === "string";
+            const hasScope = typeof scope === "string";
+            if (hasKey || hasScope) {
+                let index = -1;
+                // key优先级最高
+                if (hasKey) {
+                    index = cbs.findIndex(c => c.requestId === requestId);
+                }
+                else if (hasScope) { // 其次是scope
+                    index = cbs.findIndex(c => isSameScope(c === null || c === void 0 ? void 0 : c.scope, scope));
+                }
+                if (index >= 0) {
+                    const reqInfo = cbs[index];
+                    cbs.splice(index, 1);
+                    return reqInfo;
+                }
                 return undefined;
             }
-            const reqInfo = cbs[index];
-            cbs.splice(index, 1);
-            return reqInfo;
+            // 删除第一个
+            return cbs.shift();
         }
-        onBuiltInResponse(category, data) {
-            if (this.passiveEventMessager) {
-                this.passiveEventMessager.emit(category, data);
+        onBuiltInResponse(messageType, data) {
+            if (messageType == undefined) {
+                return data;
             }
+            // TODO:: 这里可能被串改数据
+            this.emit(messageType, data);
             return data;
         }
         getStatistics() {
             return {
-                total: this._reqCount,
-                success: this._resCount,
-                timeout: this._timeOutCount
+                total: this.statistics.reqCount,
+                success: this.statistics.resCount,
+                timeout: this.statistics.timeOutCount
             };
-        }
-        get addHandler() {
-            return this.passiveEventMessager.addHandler || noop;
-        }
-        get removeHandler() {
-            return this.passiveEventMessager.removeHandler || noop;
         }
         destroy() {
             if (this.unsubscribe) {
                 this.unsubscribe();
                 this.cbMap.clear();
-                // this.cbMap = null;
             }
         }
     }

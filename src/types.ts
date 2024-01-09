@@ -57,20 +57,20 @@ export interface GlobalReqOptions<R = any, S = any> {
      */
     subscribe?(onMessage?: Function): Unsubscribe;
     /**
-     * 获得请求的key
+     * 获得请求的ID
      * @param data 
      */
-    getReqkey?<R>(data: BaseReqData<R>): string;
+    getRequestId?<R>(data: BaseReqData<R>): string;
     /**
-     * 获取请求的Category
+     * 获取请求的 type
      * @param data 
      */
-    getReqCategory?(data: BaseReqData<R>): MessageType;
+    getReqMsgType?(data: BaseReqData<R>): MessageType;
     /**
      * 获得响应的Key
      * @param data 
      */
-    getResKey?(data: BaseResData<S>): string
+    getResponseId?(data: BaseResData<S>): string
     /**
      * 打开多个被请求方， 比如多个webview
      */
@@ -80,21 +80,16 @@ export interface GlobalReqOptions<R = any, S = any> {
      */
     onResponse?: (data: BaseResData<S>) => BaseResData<S>;
     /**
-     * 获取响应的Category
+     * 获取响应的 type
      * @param data 
      */
-    getResCategory?(data: BaseResData<S>): MessageType;
+    getResMsgType?(data: BaseResData<S>): MessageType;
     /**
      * 真正的请求
      * @param data 
      * @param key 
      */
     request?(data: BaseResData<S>, key: string): any;
-    /**
-     * 获取hashCode
-     * @param data 
-     */
-    getHashCode?(data: BaseReqData<R>): string | number;
 }
 
 

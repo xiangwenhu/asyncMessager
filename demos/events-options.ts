@@ -1,4 +1,4 @@
-import { BaseAsyncMessager, BaseReqData, BaseResData,  GlobalReqOptions } from "../src/index";
+import { BaseAsyncMessager, BaseReqData, BaseResData, GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
 
 const emitter = new EventEmitter();
@@ -8,17 +8,17 @@ const emitter = new EventEmitter();
 const emitterAsyncMessager = new BaseAsyncMessager<any>({
     // logUnhandledEvent: false,
     subscribe(onMessage) {
-        console.log("emitterAsyncMessager: subscribe");
         emitter.on("message", onMessage as any);
         return () => {
-            emitter.off("message", onMessage  as any);
+            emitter.off("message", onMessage as any);
         }
     },
-    getReqCategory(data: BaseReqData) {
-        console.log("emitterAsyncMessager： getReqCategory: method", data.method);
+    getReqMsgType(data: BaseReqData) {
+        console.log("发送： getReqCategory: method", data.method);
         return data.method!;
     },
-    getResCategory(data: BaseResData) {
+    getResMsgType(data: BaseResData) {
+        console.log("响应： getReqCategory: method", data.method);
         return data.method!;
     },
     request(data: BaseReqData, key?: string) {
@@ -28,10 +28,9 @@ const emitterAsyncMessager = new BaseAsyncMessager<any>({
 
 
 
-const symbolCccc = Symbol.for("cccc");
-// const numberCccc = 44444;
+const symbolReqType = Symbol.for("reqType");
 
-/* 模拟emitter另外一端 */ 
+/* 模拟emitter另外一端 */
 
 // 传统的事件通知
 setInterval(() => {
@@ -57,17 +56,17 @@ emitter.on("message-request", (data: BaseReqData) => {
 
 // 调用
 emitterAsyncMessager.invoke({
-    method: symbolCccc,   // numberCccc
+    method: symbolReqType,   // numberCccc
     data: 111
 }).then(res => console.log("res:", res))
 
-emitterAsyncMessager.addHandler(symbolCccc, function onEvent(data) {
+emitterAsyncMessager.on(symbolReqType, function onEvent(data) {
     console.log("symbolCccc:", data);
 })
 
 
 // 传统的监听事件
-emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
+emitterAsyncMessager.on("continuous-event", function onEvent(data) {
     console.log("continuous-event:", data);
 })
 

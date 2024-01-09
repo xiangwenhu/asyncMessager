@@ -48,7 +48,7 @@
             }).then(res => console.log("index.html:", res, res))
         });
 
-        asyncMessager.addHandler("timeInfo", function (data) {
+        asyncMessager.on("timeInfo", function (data) {
             console.log("index.html:timeInfo", data);
         });
     </script>
