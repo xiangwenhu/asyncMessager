@@ -2,7 +2,7 @@ const { hasOwnProperty: hasOwn } = Object.prototype;
 
 /* eslint-disable no-bitwise */
 /* eslint-disable no-shadow */
-export function hashcode(str = ""): number {
+export function hash(str = ""): number {
     let hash = 0; let i; let chr; let
         len;
     if (str.length === 0) return hash;
@@ -74,4 +74,17 @@ export function hasOwnProperty(obj: any, property: PropertyKey): boolean {
 export function isSameScope(scope1: string | undefined, scope2: string | undefined): boolean {
     // TODO:
     return  scope1 == scope2
+}
+
+
+export function uuid() {
+    var d = new Date().getTime();
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
+        d += performance.now(); //use high-precision timer if available
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
 }

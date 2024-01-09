@@ -20,12 +20,12 @@ class EmitterAsyncMessager extends BaseAsyncMessager<RequestData, ResponseData> 
         }
     }
 
-    protected getReqCategory(data: RequestData) {
+    protected getReqMessageType(data: RequestData) {
         console.log("WebViewBridge getReqCategory: method", data.method);
         return data.method!;
     }
 
-    protected getResCategory(data: ResponseData) {
+    protected getResMessageType(data: ResponseData) {
         return data.method!;
     }
 
@@ -75,7 +75,7 @@ emitterAsyncMessager.invoke({
     method: "oneway",
     data: 111
 }, {
-    oneway: true,
+    sendOnly: true,
 }).then(res => console.log("oneway request res:", res))
 
 

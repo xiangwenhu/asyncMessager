@@ -1,11 +1,11 @@
 
-export type MessageType = Symbol | string | number | undefined;
+export type MessageType = Symbol | string | number;
 
 export interface BaseReqData<R = any> {
     /**
      * 请求的唯一标记
      */
-    _key_?: string;
+    requestId?: string;
     /**
      * scope，区分多个渠道
      * 比如页面打开多个iframe，我们监听的是window的message的事件，
@@ -29,8 +29,8 @@ export interface BaseReqData<R = any> {
 
 export type BaseResData<S = any> = BaseReqData<S>
 
-export interface ReqInfo<R = any> {
-    key: string | undefined;
+export interface RequestInfo<R = any> {
+    requestId: string | undefined;
     cb: Function;
     reqData?: R;
     reqTime?: number;
@@ -98,8 +98,8 @@ export interface GlobalReqOptions<R = any, S = any> {
 }
 
 
-export interface ReqOptions {
+export interface RequestOptions {
     timeout?: number;
     defaultRes?: any;
-    oneway?: boolean;
+    sendOnly?: boolean;
 }

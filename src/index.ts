@@ -4,7 +4,7 @@ export {
 
 export {
     GlobalReqOptions,
-    ReqOptions,
+    RequestOptions as ReqOptions,
     BaseReqData,
     BaseResData,
 } from "./types"

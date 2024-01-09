@@ -1,9 +1,9 @@
 import * as util from "./util";
 import PEventMessager, { IPEventMessager } from "./PEventMessager";
-import { BaseReqData, BaseResData, GlobalReqOptions, MessageType, ReqInfo, ReqOptions, Unsubscribe } from "./types";
+import { BaseReqData, BaseResData, GlobalReqOptions, MessageType, RequestInfo, RequestOptions, Unsubscribe } from "./types";
 import { isSameScope } from "./util";
 
-const DEFAULT_G_OPTIONS: GlobalReqOptions = {
+const DEFAULT_GLOBAL_OPTIONS: GlobalReqOptions = {
     timeout: 5000,
     clearTimeoutReq: true,
     // autoSubscribe: false,
@@ -11,7 +11,7 @@ const DEFAULT_G_OPTIONS: GlobalReqOptions = {
     logUnhandledEvent: true,
 };
 
-type extensibleMethod = "subscribe" | "getReqKey" | "getReqCategory" | "getResKey" | "getResCategory" | "request" | "getResScope" | "onResponse" | "getHashCode";
+type ExtensibleMethod = "subscribe" | "getRequestId" | "getReqMessageType" | "getResponseId" | "getResMessageType" | "request" | "getResScope" | "onResponse";
 
 export default class BaseAsyncMessager<R = any, S = any> {
 
@@ -19,28 +19,28 @@ export default class BaseAsyncMessager<R = any, S = any> {
     /**
      * 请求的次数
      */
-    private _reqCount = 0;
+    private reqCount = 0;
     /**
      * 响应的次数
      */
-    private _resCount = 0;
+    private resCount = 0;
     /**
      * 超时的数量
      */
-    private _timeOutCount = 0;
+    private timeOutCount = 0;
 
-    private _options: GlobalReqOptions;
+    private options: GlobalReqOptions;
 
-    private cbMap = new Map<MessageType, ReqInfo<R>[]>();
+    private cbMap = new Map<MessageType, RequestInfo<R>[]>();
 
     protected unsubscribe?: Unsubscribe;
 
-    constructor(options: GlobalReqOptions = DEFAULT_G_OPTIONS,
+    constructor(options: GlobalReqOptions = DEFAULT_GLOBAL_OPTIONS,
         private passiveEventMessager: IPEventMessager = new PEventMessager()) {
-        this._options = { ...DEFAULT_G_OPTIONS, ...options };
+        this.options = { ...DEFAULT_GLOBAL_OPTIONS, ...options };
 
-        if (util.isFunction(this._options.subscribe)) {
-            this.unsubscribe = this._options.subscribe!(this.onMessage)
+        if (util.isFunction(this.options.subscribe)) {
+            this.unsubscribe = this.options.subscribe!(this.onMessage)
         }
         this.useOptions = true;
     }
@@ -49,16 +49,20 @@ export default class BaseAsyncMessager<R = any, S = any> {
         throw new Error("not implemented")
     }
 
-    protected getReqKey<R>(data: BaseReqData<R>) {
-        const method = this.getMethod("getHashCode");
-        return method!(data);
+    /**
+     * 获取请求的key
+     * @param data 
+     * @returns 
+     */
+    protected getRequestId<R>(_data: BaseReqData<R>): string {
+        return util.uuid()
     }
 
-    protected getReqCategory(data: BaseReqData<R>): MessageType {
+    protected getReqMessageType(data: BaseReqData<R>): MessageType | undefined {
         return data.method || data.type;
     }
 
-    protected getResCategory(data: BaseResData<S>): MessageType {
+    protected getResMessageType(data: BaseResData<S>): MessageType | undefined {
         return data.method || data.type;
     }
 
@@ -66,8 +70,8 @@ export default class BaseAsyncMessager<R = any, S = any> {
         throw new Error("not implemented")
     }
 
-    protected getResKey(data: BaseResData<S>): MessageType {
-        return data._key_!;
+    protected getResponseId(data: BaseResData<S>): string | undefined {
+        return data.requestId;
     }
 
     protected getResScope(data: BaseResData<S>) {
@@ -80,104 +84,111 @@ export default class BaseAsyncMessager<R = any, S = any> {
      * @returns 
      */
     protected getHashCode(data: BaseReqData<R>) {
-        return util.hashcode(JSON.stringify(data))
+        return util.hash(JSON.stringify(data))
     }
 
-    protected onResponse(_category: MessageType, data: BaseResData<S>) {
+    protected onResponse(_messageType: MessageType, data: BaseResData<S>) {
         return data;
     }
 
-    private getMethod = (name: extensibleMethod) => {
-        const optMethod = this._options[name as keyof GlobalReqOptions];
+    private getMethod = <R = any>(name: ExtensibleMethod) => {
+        const optMethod = this.options[name as keyof GlobalReqOptions];
         const classMethod = this[name as keyof this];
 
         const method = this.useOptions ? optMethod || classMethod : classMethod || optMethod;
         if (!method) {
             console.error(`${method} 查找失败，请确保在Class或者options上已定义`);
         }
-        return method as Function;
+        return method as ((...args: any[]) => R);
     }
 
     protected onMessage = (data: BaseResData<S>) => {
-        const category = this.getMethod("getResCategory")(data);
-        const key = this.getMethod("getResKey")(data);
+        const messageType = this.getMethod("getResMessageType")(data);
+        const responseId = this.getMethod("getResponseId")(data);
+
+        if (!messageType) {
+            if (this.options.logUnhandledEvent) {
+                console.error(`${messageType} 的响应请求未定义`);
+            }
+            return
+        }
 
         const scope = this.getMethod("getResScope")(data);
         // 提供自定义助力数据的能力
-        data = this.getMethod("onResponse")(category, data);
+        data = this.onResponse(messageType, data);
 
-        const isInHandlers = this.passiveEventMessager.has(category);
+        const isInHandlers = this.passiveEventMessager.has(messageType);
         // 内置的成功处理
-        this.onBuiltInResponse(category, data);
+        this.onBuiltInResponse(messageType, data);
 
-        const callback = this.getCallback(category, scope, key);
+        const callback = this.getCallback(messageType, scope, responseId);
 
         //  AsyncMessager中没有，PEventMessager中也没有, 并且开启相关的日志输出
-        if (!callback && !isInHandlers && this._options.logUnhandledEvent) {
+        if (!callback && !isInHandlers && this.options.logUnhandledEvent) {
             this.onError();
-            console.warn(`未找到category为${category},key为${key}的回调信息`);
+            console.warn(`未找到category为${messageType},key为${responseId}的回调信息`);
             return;
         }
-        this.onSuccess(category, data);
+        this.onSuccess(messageType, data);
         if (callback) {
             callback(data);
         }
     }
 
-    private addCallback(category: MessageType, reqInfo: ReqInfo) {
+    private addCallback(category: MessageType, reqInfo: RequestInfo) {
         const cbs = this.cbMap.get(category);
         if (!cbs) {
             this.cbMap.set(category, []);
         }
 
         this.cbMap.get(category)!.push({
-            key: reqInfo.key,
+            requestId: reqInfo.requestId,
             reqTime: Date.now(),
             cb: reqInfo.cb,
             scope: reqInfo.scope
         });
     }
 
-    private getCallback(category: MessageType, scope: string, key: string) {
-        const reqInfo = this.removeReqInfo(category, scope, key);
+    private getCallback(category: MessageType, scope: string, requestId: string) {
+        const reqInfo = this.removeRequest(category, scope, requestId);
         if (!reqInfo) {
             return undefined;
         }
         return reqInfo.cb;
     }
 
-    invoke(data: BaseResData, reqOptions?: ReqOptions, ...args: any[]): Promise<BaseResData<S> | null> {
-        this._reqCount++;
+    invoke(data: BaseResData, reqOptions?: RequestOptions, ...args: any[]): Promise<BaseResData<S> | undefined> {
+        this.reqCount++;
         const {
             timeout = 5000,
-            oneway = false,
+            sendOnly = false,
             defaultRes = {
                 message: "请求超时"
             }
         } = reqOptions || {};
 
-        // 获得key值
-        if (!util.hasOwnProperty(data, "_key_")) {
-            data._key_ = this.getMethod("getReqkey").apply(this, [data]);
+        // 获得请求唯一ID
+        if (!util.hasOwnProperty(data, "requestId")) {
+            data.requestId = this.getMethod("getRequestId").apply(this, [data]);
         }
-        const hashKey = data._key_;
-        const tout = timeout || this._options.timeout;
-        const category = this.getMethod("getReqCategory")(data);
+        const requestId = data.requestId;
+        const tout = timeout || this.options.timeout;
+        const messageType = this.getMethod("getReqMessageType")(data);
 
         // 只发不收
-        if (oneway) {
-            this.getMethod("request")(data, hashKey, ...args);
-            return Promise.resolve(null)
+        if (sendOnly) {
+            this.getMethod("request")(data, requestId, ...args);
+            return Promise.resolve(undefined)
         }
 
         return new Promise((resolve, reject) => {
             const { run, cancel } = util.delay(undefined, tout);
             // 超时
             run().then(() => {
-                console.log("请求超时:", category, data, hashKey);
+                console.log("请求超时:", messageType, data, requestId);
                 this.onTimeout();
-                if (this._options.clearTimeoutReq) {
-                    this.removeReqInfo(category, data?.scope as string, hashKey);
+                if (this.options.clearTimeoutReq) {
+                    this.removeRequest(messageType, data?.scope as string, requestId);
                 }
                 reject({
                     message: "请求超时",
@@ -185,8 +196,8 @@ export default class BaseAsyncMessager<R = any, S = any> {
                 });
             });
 
-            this.addCallback(category, {
-                key: hashKey,
+            this.addCallback(messageType, {
+                requestId: requestId,
                 cb: (msg: any) => {
                     // 取消超时回调
                     cancel();
@@ -195,23 +206,22 @@ export default class BaseAsyncMessager<R = any, S = any> {
                 scope: data.scope
             });
             // 调用
-            this.getMethod("request")(data, hashKey, ...args);
+            this.getMethod("request")(data, requestId, ...args);
         });
     }
 
-    private removeReqInfo(category: MessageType, scope: string, key: string | undefined) {
-        const cbs = this.cbMap.get(category);
+    private removeRequest(messageType: MessageType, scope: string | undefined, requestId: string | undefined) {
+        const cbs = this.cbMap.get(messageType);
         if (!cbs || cbs.length === 0) {
             return undefined;
         }
-
-        const hasKey = typeof key === "string";
+        const hasKey = typeof requestId === "string";
         const hasScope = typeof scope === "string"
         if (hasKey || hasScope) {
             let index = -1;
             // key优先级最高
             if (hasKey) {
-                index = cbs.findIndex(c => c.key === key)
+                index = cbs.findIndex(c => c.requestId === requestId)
             } else if (hasScope) { // 其次是scope
                 index = cbs.findIndex(c => isSameScope(c?.scope, scope))
             }
@@ -228,13 +238,13 @@ export default class BaseAsyncMessager<R = any, S = any> {
     }
 
     private onTimeout = () => {
-        this._timeOutCount++;
+        this.timeOutCount++;
     }
 
     private onError = () => { }
 
     private onSuccess = (category: MessageType, data: BaseResData<S>) => {
-        this._resCount++;
+        this.resCount++;
     }
 
     protected onBuiltInResponse(category: MessageType, data: BaseResData<S>) {
@@ -247,19 +257,19 @@ export default class BaseAsyncMessager<R = any, S = any> {
 
     public getStatistics() {
         return {
-            total: this._reqCount,
-            success: this._resCount,
-            timeout: this._timeOutCount
+            total: this.reqCount,
+            success: this.resCount,
+            timeout: this.timeOutCount
         };
     }
 
 
     get addHandler() {
-        return this.passiveEventMessager.addHandler || util.noop
+        return this.passiveEventMessager.on || util.noop
     }
 
     get removeHandler() {
-        return this.passiveEventMessager.removeHandler || util.noop;
+        return this.passiveEventMessager.off || util.noop;
     }
 
     destroy() {
