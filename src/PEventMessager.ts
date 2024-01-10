@@ -1,31 +1,29 @@
-import { MessageType } from "./types";
-
 interface HandlerInfo {
     target: any;
     methodName: string;
     listener: Function;
 }
 
-export interface IPEventMessager<T = any, D = any> {
-    on(category: T | T[], fun: (data: D) => any, context?: any): any;
-    off?(category: T | T[], fun: (data: D) => any): any;
-    emit(category: T, data: D, ...args: any[]): any;
-    has(category: T):boolean;
+export interface IPEventMessager<T = any> {
+    on<D = any>(type: T | T[], fun: (data: D) => any, context?: any): any;
+    off<D = any>(type: T | T[], fun: (data: D) => any): any;
+    emit<D = any>(type: T, data: D, ...args: any[]): any;
+    has(category: T): boolean;
 }
 
-export default class PEventMessager<DataType = any> implements IPEventMessager<MessageType, DataType> {
-    private _map = new Map<MessageType, HandlerInfo[]>();
+export default class PEventMessager<MessageType = any> implements IPEventMessager<MessageType> {
+    private map = new Map<MessageType, HandlerInfo[]>();
     /**
      * 可以处理多种类型的事件
      * @param messageType
      * @returns
      */
-    on = (messageType: MessageType | MessageType[], listener: (data: any) => any, context: any = null) => {
+    on = <D = any, RD = any>(messageType: MessageType | MessageType[], listener: (data: D) => RD, context: any = null) => {
         const cates = Array.isArray(messageType) ? messageType : [messageType];
-        const map = this._map;
+        const map = this.map;
 
         if (typeof listener !== "function") {
-            return console.error(`PassiveEventMessager::addHandler: fn 必须是一个函数`);
+            return console.error(`PEventMessager::on: fn 必须是一个函数`);
         }
 
         cates.forEach(cate => {
@@ -43,14 +41,13 @@ export default class PEventMessager<DataType = any> implements IPEventMessager<M
         });
     }
 
-    off = (messageType:  MessageType | MessageType[], listener: Function) => {
-        console.log("removeHander:", messageType);
+    off = (messageType: MessageType | MessageType[], listener: Function) => {
 
         const cates = Array.isArray(messageType) ? messageType : [messageType];
-        const map = this._map;
+        const map = this.map;
 
         if (typeof listener !== "function") {
-            return console.error(`PassiveEventMessager::removeHandler: fn 必须是一个函数`);
+            return console.error(`PEventMessager::off: fn 必须是一个函数`);
         }
 
         let cate: MessageType;
@@ -80,21 +77,20 @@ export default class PEventMessager<DataType = any> implements IPEventMessager<M
 
 
     has(messageType: MessageType) {
-        const handlers = this._map.get(messageType);
+        const handlers = this.map.get(messageType);
         return !!handlers && handlers.length > 0;
     }
 
-    emit = (messageType: MessageType, data: any, ...args: any[]) => {
-        const handlers = this._map.get(messageType);
+    emit = <D = any>(messageType: MessageType, data: D, ...args: any[]) => {
+        const handlers = this.map.get(messageType);
         if (handlers == undefined) {
             return;
         }
 
-        // console.log("handlers", handlers.length, handlers);
         handlers.forEach(handler => {
             const { listener: fun } = handler;
             if (!fun) {
-                console.error(`PassiveEventMessager:不能找到category为${messageType}对应的${handler.methodName}事件处理函数`);
+                console.error(`PEventMessager:不能找到messageType为${messageType}对应的${handler.methodName}事件处理函数`);
             } else {
                 fun.apply(handler.target, [data].concat(args));
             }

@@ -29,10 +29,10 @@ export interface BaseReqData<R = any> {
 
 export type BaseResData<S = any> = BaseReqData<S>
 
-export interface RequestInfo<R = any> {
+export interface RequestInfo<D = any> {
     requestId: string | undefined;
     cb: Function;
-    reqData?: R;
+    reqData?: D;
     reqTime?: number;
     scope: string | undefined;
 }

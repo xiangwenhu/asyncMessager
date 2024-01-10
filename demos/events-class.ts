@@ -6,7 +6,7 @@ const emitter = new EventEmitter();
 type RequestData  = BaseReqData;
 type ResponseData = RequestData;
 
-class EmitterAsyncMessager extends BaseAsyncMessager<RequestData, ResponseData> {
+class EmitterAsyncMessager extends BaseAsyncMessager {
     // eslint-disable-next-line no-useless-constructor
     constructor(options: GlobalReqOptions = {}) {
         super(options);

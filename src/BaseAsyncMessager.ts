@@ -12,7 +12,7 @@ const DEFAULT_GLOBAL_OPTIONS: GlobalReqOptions = {
 
 type ExtensibleMethod = "subscribe" | "getRequestId" | "getReqMsgType" | "getResponseId" | "getResMsgType" | "request" | "getResScope" | "onResponse";
 
-export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<S>{
+export default class BaseAsyncMessager extends PEventMessager<MessageType>{
     private useOptions: boolean = false;
 
     private statistics = {
@@ -23,7 +23,7 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
 
     private options: GlobalReqOptions;
 
-    private cbMap = new Map<MessageType, RequestInfo<R>[]>();
+    private cbMap = new Map<MessageType, RequestInfo[]>();
 
     protected unsubscribe?: Unsubscribe;
 
@@ -46,35 +46,35 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
      * @param data 
      * @returns 
      */
-    protected getRequestId<R>(_data: BaseReqData<R>): string {
+    protected getRequestId<D>(_data: BaseReqData<D>): string {
         return util.uuid()
     }
 
-    protected getReqMsgType(data: BaseReqData<R>): MessageType | undefined {
+    protected getReqMsgType<D>(data: BaseReqData<D>): MessageType | undefined {
         return data.method || data.type;
     }
 
-    protected getResMsgType(data: BaseResData<S>): MessageType | undefined {
+    protected getResMsgType<RD>(data: BaseResData<RD>): MessageType | undefined {
         return data.method || data.type;
     }
 
-    protected request(_data: BaseReqData<R>, _key: string): any {
+    protected request<D>(_data: BaseReqData<D>): any {
         throw new Error("not implemented")
     }
 
-    protected getResponseId(data: BaseResData<S>): string | undefined {
+    protected getResponseId<RD>(data: BaseResData<RD>): string | undefined {
         return data.requestId;
     }
 
-    protected getResScope(data: BaseResData<S>) {
+    protected getResScope<RD>(data: BaseResData<RD>) {
         return data.scope;
     }
 
-    protected onResponse(_messageType: MessageType, data: BaseResData<S>) {
+    protected onResponse<RD>(_messageType: MessageType, data: BaseResData<RD>) {
         return data;
     }
 
-    private getMethod = <R = any>(name: ExtensibleMethod) => {
+    private getMethod = <R>(name: ExtensibleMethod) => {
         const optMethod = this.options[name as keyof GlobalReqOptions];
         const classMethod = this[name as keyof this];
 
@@ -85,9 +85,9 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
         return method as ((...args: any[]) => R);
     }
 
-    protected onMessage = (data: BaseResData<S> = {}) => {
-        const messageType = this.getMethod("getResMsgType")(data);
-        const responseId = this.getMethod("getResponseId")(data);
+    protected onMessage = <RD>(data: BaseResData<RD> = {}) => {
+        const messageType = this.getMethod<MessageType>("getResMsgType")(data);
+        const responseId = this.getMethod<string | undefined>("getResponseId")(data);
 
         // 提供自定义助力数据的能力
         data = this.onResponse(messageType, data);
@@ -95,7 +95,7 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
         // 内置的成功处理
         this.onBuiltInResponse(messageType, data);
 
-        const scope = this.getMethod("getResScope")(data);
+        const scope = this.getMethod<string>("getResScope")(data);
         const callback = this.getCallback(messageType, scope, responseId);
 
         const isInHandlers = this.has(messageType);
@@ -125,7 +125,7 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
         });
     }
 
-    private getCallback(messageType: MessageType, scope: string, requestId: string) {
+    private getCallback(messageType: MessageType, scope: string, requestId: string | undefined) {
         if (messageType == undefined) return undefined
 
         const reqInfo = this.removeRequest(messageType, scope, requestId);
@@ -135,7 +135,7 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
         return reqInfo.cb;
     }
 
-    invoke(data: BaseResData, reqOptions?: RequestOptions, ...args: any[]): Promise<BaseResData<S> | undefined> {
+    invoke<D = any, RD = any>(data: BaseResData<D>, reqOptions?: RequestOptions, ...args: any[]): Promise<BaseResData<RD> | undefined> {
         this.statistics.reqCount++;
         const {
             timeout = 5000,
@@ -147,11 +147,11 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
 
         // 获得请求唯一ID
         if (!util.hasOwnProperty(data, "requestId")) {
-            data.requestId = this.getMethod("getRequestId").apply(this, [data]);
+            data.requestId = this.getMethod<string>("getRequestId").apply(this, [data]);
         }
         const requestId = data.requestId;
         const tout = timeout || this.options.timeout;
-        const messageType = this.getMethod("getReqMsgType")(data);
+        const messageType = this.getMethod<MessageType | undefined>("getReqMsgType")(data);
 
         // 只发不收
         if (sendOnly) {
@@ -224,11 +224,11 @@ export default class BaseAsyncMessager<R = any, S = any> extends PEventMessager<
 
     private onError = () => { }
 
-    private onSuccess = (_messageType: MessageType, data: BaseResData<S>) => {
+    private onSuccess = <RD>(_messageType: MessageType, _data: BaseResData<RD>) => {
         this.statistics.resCount++;
     }
 
-    protected onBuiltInResponse(messageType: MessageType, data: BaseResData<S>) {
+    protected onBuiltInResponse<RD>(messageType: MessageType, data: BaseResData<RD>) {
         if (messageType == undefined) {
             return data;
         }
