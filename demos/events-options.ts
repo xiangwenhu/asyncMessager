@@ -13,14 +13,7 @@ const messager = new BaseAsyncMessager({
             emitter.off("message", onMessage as any);
         }
     },
-    getReqMsgType(data: BaseReqData) {
-        console.log("发送： getReqCategory: method", data.method);
-        return data.method!;
-    },
-    getResMsgType(data: BaseResData) {
-        console.log("响应： getReqCategory: method", data.method);
-        return data.method!;
-    },
+
     request(data: BaseReqData, key?: string) {
         emitter.emit("message-request", data);
     }

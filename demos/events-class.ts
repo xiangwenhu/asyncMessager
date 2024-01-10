@@ -7,7 +7,6 @@ type RequestData  = BaseReqData;
 type ResponseData = RequestData;
 
 class EmitterAsyncMessager extends BaseAsyncMessager {
-    // eslint-disable-next-line no-useless-constructor
     constructor(options: GlobalReqOptions = {}) {
         super(options);
     }
@@ -20,17 +19,7 @@ class EmitterAsyncMessager extends BaseAsyncMessager {
         }
     }
 
-    protected getReqMessageType(data: RequestData) {
-        console.log("WebViewBridge getReqCategory: method", data.method);
-        return data.method!;
-    }
-
-    protected getResMessageType(data: ResponseData) {
-        return data.method!;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    protected request(data: RequestData, key?: string) {
+    protected request(data: RequestData) {
         emitter.emit("message-request", data);
     }
 }

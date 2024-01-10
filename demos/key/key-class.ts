@@ -17,7 +17,7 @@ emitter.on("message-request", function (data: BaseReqData) {
     }
 })
 
-class EmitterAsyncMessager extends BaseAsyncMessager<any, any> {
+class EmitterAsyncMessager extends BaseAsyncMessager {
     // eslint-disable-next-line no-useless-constructor
     constructor(options: GlobalReqOptions = {}) {
         super(options);

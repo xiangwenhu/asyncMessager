@@ -1,6 +1,11 @@
 
 ## 摘要
-异步回调转Promise通用方案。支持EventEmitter, MQTT, socket.io, iframe， webview等等场景。
+异步回调转Promise通用方案。支持
+* EventEmitter 类别
+* MQTT, socket.io,
+* iframe
+* webview
+* 等等场景。
 
 
 ## 依赖
@@ -10,7 +15,7 @@
 
 
 ## 示例代码
-
+[示例代码源码地址](./demos)
 
 
 
@@ -22,33 +27,42 @@ import EventEmitter from "events";
 
 const emitter = new EventEmitter();
 
-interface RequestData extends BaseReqData {
-    method: string;
-    data?: any;
-}
+type RequestData  = BaseReqData;
 type ResponseData = RequestData;
 
+class EmitterAsyncMessager extends BaseAsyncMessager {
+    constructor(options: GlobalReqOptions = {}) {
+        super(options);
+    }
 
-// 初始化异步Messager
-const emitterAsyncMessager = new BaseAsyncMessager<RequestData>({
-    subscribe(onMessage) {
-        console.log("emitterAsyncMessager: subscribe");
-        emitter.on("message", onMessage as any);
+    subscribe() {
+        console.log("WebViewBridge: subscribe");
+        emitter.on("message", this.onMessage);
         return () => {
-            emitter.off("message", onMessage  as any);
+            emitter.off("message", this.onMessage);
         }
-    },
-    getReqCategory(data: RequestData) {
-        console.log("emitterAsyncMessager： getReqCategory: method", data.method);
-        return data.method;
-    },
-    getResCategory(data: ResponseData) {
-        return data.method;
-    },
-    request(data: RequestData, key?: string) {
+    }
+
+    protected request(data: RequestData) {
         emitter.emit("message-request", data);
     }
-});
+}
+
+const emitterAsyncMessager = new EmitterAsyncMessager();
+emitterAsyncMessager.subscribe();
+
+/*使用方 */
+
+// 调用
+emitterAsyncMessager.invoke({
+    method: "cccc",
+    data: 111
+}).then(res => console.log("res:", res))
+
+// 传统的监听事件
+emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
+    console.log("continuous-event:", data);
+})
 
 
 /* 模拟emitter另外一端 */ 
@@ -73,18 +87,6 @@ emitter.on("message-request", (data: RequestData) => {
 
 
 
-/*使用方 */
-
-// 调用
-emitterAsyncMessager.invoke({
-    method: "cccc",
-    data: 111
-}).then(res => console.log("res:", res))
-
-// 传统的监听事件
-emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
-    console.log("continuous-event:", data);
-})
 
 ```
 
@@ -111,19 +113,13 @@ emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
                     window.removeEventListener("message", onIframeMessage);
                 }
             },
-            getReqCategory(data) {
-                console.log("asyncMessager getReqCategory: method", data.method);
-                return data.method;
-            },
-            getResCategory(data) {
-                return data.method;
-            },
             request(data, key) {
                 sendMessage(data);
             }
         });
 
         iframe1.contentWindow.onload = () => {
+            // 异步Promise调用
             asyncMessager.invoke({
                 method: "init",
                 data: {
@@ -132,7 +128,8 @@ emitterAsyncMessager.addHandler("continuous-event", function onEvent(data) {
                 }
             }).then(res => console.log("index.html:", res, res))
         }
-        asyncMessager.addHandler("timeInfo", function(data){
+        // 传统的回调调用
+        asyncMessager.on("timeInfo", function(data){
             console.log("index.html:timeInfo", data);
         })
 
@@ -178,7 +175,7 @@ socket.on("connect", () => {
     }).then(res => console.log("index.html:", res, res))
 });
 
-asyncMessager.addHandler("timeInfo", function (data) {
+asyncMessager.on("timeInfo", function (data) {
     console.log("index.html:timeInfo", data);
 });
 
