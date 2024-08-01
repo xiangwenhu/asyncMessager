@@ -19,7 +19,7 @@ const messager = new BaseAsyncMessager({
     }
 });
 
-
+messager.subscribe();
 
 const symbolReqType = Symbol.for("reqType");
 

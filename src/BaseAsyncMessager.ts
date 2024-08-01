@@ -12,7 +12,7 @@ const DEFAULT_GLOBAL_OPTIONS: GlobalReqOptions = {
 
 type ExtensibleMethod = "subscribe" | "getRequestId" | "getReqMsgType" | "getResponseId" | "getResMsgType" | "request" | "getResScope" | "onResponse";
 
-export default class BaseAsyncMessager extends PEventMessager<MessageType>{
+export default class BaseAsyncMessager extends PEventMessager<MessageType> {
     private useOptions: boolean = false;
 
     private statistics = {
@@ -31,13 +31,17 @@ export default class BaseAsyncMessager extends PEventMessager<MessageType>{
         super();
         this.options = { ...DEFAULT_GLOBAL_OPTIONS, ...options };
 
-        if (util.isFunction(this.options.subscribe)) {
-            this.unsubscribe = this.options.subscribe!(this.onMessage)
+        if (this.options.subscribe && util.isFunction(this.options.subscribe)) {
+            // 绑定参数 this.onMessage， 以方便opitons使用
+            this.subscribe = this.options.subscribe.bind(this, this.onMessage);
+            // this.unsubscribe = this.subscribe(this.onMessage)
+
+            // 定义了 subscribe，即可认为是 useOptions
+            this.useOptions = true;
         }
-        this.useOptions = true;
     }
 
-    subscribe(onMessage?: Function): Unsubscribe {
+    subscribe(this: BaseAsyncMessager): Unsubscribe {
         throw new Error("not implemented")
     }
 

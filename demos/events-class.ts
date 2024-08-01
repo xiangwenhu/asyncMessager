@@ -1,4 +1,4 @@
-import { BaseAsyncMessager, BaseReqData, GlobalReqOptions } from "../src/index";
+import { BaseAsyncMessager, BaseReqData, GlobalReqOptions } from "../lib/index";
 import EventEmitter from "events";
 
 const emitter = new EventEmitter();
