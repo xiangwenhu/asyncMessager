@@ -1,5 +1,7 @@
+## 流程和原理图
+![流程和原理图](./images/process.png)
 
-## 简要说明
+## 源码结构说明
 ```
     src
         BaseAsyncMessager.ts    核心，基础异步消息处理类，包含：流程控制，主动的Promise类型的通讯
@@ -8,3 +10,6 @@
         types.ts                类型定义
         util.ts                 辅助方法
 ```
+
+
+
