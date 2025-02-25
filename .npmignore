@@ -1,0 +1,9 @@
+.vscode
+demos
+docs
+node_modules
+src
+.gitignore
+todo.md
+rollup.config.js
+tsconfig.json

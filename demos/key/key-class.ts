@@ -1,4 +1,4 @@
-import { BaseAsyncMessager, BaseReqData, GlobalReqOptions } from "../../src/index";
+import { BaseAsyncMessenger, BaseReqData, GlobalReqOptions } from "../../src/index";
 import EventEmitter from "events";
 
 const emitter = new EventEmitter();
@@ -17,7 +17,7 @@ emitter.on("message-request", function (data: BaseReqData) {
     }
 })
 
-class EmitterAsyncMessager extends BaseAsyncMessager {
+class EmitterAsyncMessenger extends BaseAsyncMessenger {
     // eslint-disable-next-line no-useless-constructor
     constructor(options: GlobalReqOptions = {}) {
         super(options);
@@ -37,18 +37,18 @@ class EmitterAsyncMessager extends BaseAsyncMessager {
     }
 }
 
-const emitterAsyncMessager = new EmitterAsyncMessager();
-emitterAsyncMessager.subscribe();
+const emitterAsyncMessenger = new EmitterAsyncMessenger();
+emitterAsyncMessenger.subscribe();
 
 
 // key相同，返回相同
-emitterAsyncMessager.invoke({
+emitterAsyncMessenger.invoke({
     method: "method1",
     data: "data2",
     requestId: "key2"
 }).then(res=>console.log("res1_key2", res));
 
-emitterAsyncMessager.invoke({
+emitterAsyncMessenger.invoke({
     method: "method1",
     data: "data1",
     requestId: "key1"

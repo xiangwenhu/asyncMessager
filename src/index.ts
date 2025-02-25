@@ -1,6 +1,6 @@
 export {
-    default as BaseAsyncMessager,
-} from "./BaseAsyncMessager";
+    default as BaseAsyncMessenger,
+} from "./BaseAsyncMessenger";
 
 export {
     GlobalReqOptions,

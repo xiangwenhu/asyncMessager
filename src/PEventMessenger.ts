@@ -4,14 +4,14 @@ interface HandlerInfo {
     listener: Function;
 }
 
-export interface IPEventMessager<T = any> {
+export interface IPEventMessenger<T = any> {
     on<D = any>(type: T | T[], fun: (data: D) => any, context?: any): any;
     off<D = any>(type: T | T[], fun: (data: D) => any): any;
     emit<D = any>(type: T, data: D, ...args: any[]): any;
     has(category: T): boolean;
 }
 
-export default class PEventMessager<MessageType = any> implements IPEventMessager<MessageType> {
+export default class PEventMessenger<MessageType = any> implements IPEventMessenger<MessageType> {
     private map = new Map<MessageType, HandlerInfo[]>();
     /**
      * 可以处理多种类型的事件
@@ -23,7 +23,7 @@ export default class PEventMessager<MessageType = any> implements IPEventMessage
         const map = this.map;
 
         if (typeof listener !== "function") {
-            return console.error(`PEventMessager::on: fn 必须是一个函数`);
+            return console.error(`PEventMessenger::on: fn 必须是一个函数`);
         }
 
         cates.forEach(cate => {
@@ -47,7 +47,7 @@ export default class PEventMessager<MessageType = any> implements IPEventMessage
         const map = this.map;
 
         if (typeof listener !== "function") {
-            return console.error(`PEventMessager::off: fn 必须是一个函数`);
+            return console.error(`PEventMessenger::off: fn 必须是一个函数`);
         }
 
         let cate: MessageType;
@@ -90,7 +90,7 @@ export default class PEventMessager<MessageType = any> implements IPEventMessage
         handlers.forEach(handler => {
             const { listener: fun } = handler;
             if (!fun) {
-                console.error(`PEventMessager:不能找到messageType为${messageType}对应的${handler.methodName}事件处理函数`);
+                console.error(`PEventMessenger:不能找到messageType为${messageType}对应的${handler.methodName}事件处理函数`);
             } else {
                 fun.apply(handler.target, [data].concat(args));
             }
