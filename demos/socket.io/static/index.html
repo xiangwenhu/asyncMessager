@@ -11,7 +11,7 @@
 <body>
 
 
-    <script src="./asyncMessager.js"></script>
+    <script src="./asyncMessenger.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
@@ -21,7 +21,7 @@
             socket.emit("message", msg)
         }
         
-        const asyncMessager = new AsyncMessager.BaseAsyncMessager({
+        const asyncMessenger = new AsyncMessenger.BaseAsyncMessenger({
             // logUnhandledEvent: false,
             subscribe(onMessage) {
                 function onSocketMessage(msg) {
@@ -39,7 +39,7 @@
 
         socket.on("connect", () => {
             console.log("connect")
-            asyncMessager.invoke({
+            asyncMessenger.invoke({
                 method: "getUsers",
                 data: {
                     user: 123456,
@@ -48,7 +48,7 @@
             }).then(res => console.log("index.html:", res, res))
         });
 
-        asyncMessager.on("timeInfo", function (data) {
+        asyncMessenger.on("timeInfo", function (data) {
             console.log("index.html:timeInfo", data);
         });
     </script>

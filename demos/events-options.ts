@@ -1,11 +1,11 @@
-import { BaseAsyncMessager, BaseReqData, BaseResData, GlobalReqOptions } from "../src/index";
+import { BaseAsyncMessenger, BaseReqData, BaseResData, GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
 
 const emitter = new EventEmitter();
 
 
-// 初始化异步Messager
-const messager = new BaseAsyncMessager({
+// 初始化异步Messenger
+const Messenger = new BaseAsyncMessenger({
     // logUnhandledEvent: false,
     subscribe(onMessage) {
         emitter.on("message", onMessage as any);
@@ -19,7 +19,7 @@ const messager = new BaseAsyncMessager({
     }
 });
 
-messager.subscribe();
+Messenger.subscribe();
 
 const symbolReqType = Symbol.for("reqType");
 
@@ -48,18 +48,18 @@ emitter.on("message-request", (data: BaseReqData) => {
 /*使用方 */
 
 // 调用
-messager.invoke<number>({
+Messenger.invoke<number>({
     method: symbolReqType,  
     data: 111,
 }).then(res => console.log("res:", res))
 
-messager.on(symbolReqType, function onEvent(data) {
+Messenger.on(symbolReqType, function onEvent(data) {
     console.log("symbolCccc:", data);
 })
 
 
 // 传统的监听事件
-messager.on("continuous-event", function onEvent(data) {
+Messenger.on("continuous-event", function onEvent(data) {
     console.log("continuous-event:", data);
 })
 

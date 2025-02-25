@@ -1,4 +1,4 @@
-import { BaseAsyncMessager, BaseReqData, GlobalReqOptions } from "../lib/index";
+import { BaseAsyncMessenger, BaseReqData, GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
 
 const emitter = new EventEmitter();
@@ -6,7 +6,7 @@ const emitter = new EventEmitter();
 type RequestData  = BaseReqData;
 type ResponseData = RequestData;
 
-class EmitterAsyncMessager extends BaseAsyncMessager {
+class EmitterAsyncMessenger extends BaseAsyncMessenger {
     constructor(options: GlobalReqOptions = {}) {
         super(options);
     }
@@ -24,8 +24,8 @@ class EmitterAsyncMessager extends BaseAsyncMessager {
     }
 }
 
-const emitterAsyncMessager = new EmitterAsyncMessager();
-emitterAsyncMessager.subscribe();
+const emitterAsyncMessenger = new EmitterAsyncMessenger();
+emitterAsyncMessenger.subscribe();
 
 
 
@@ -54,13 +54,13 @@ emitter.on("message-request", (data: RequestData) => {
 })
 
 
-emitterAsyncMessager.invoke({
+emitterAsyncMessenger.invoke({
     method: "cccc",
     data: 111
 }).then(res => console.log("res:", res))
 
 
-emitterAsyncMessager.invoke({
+emitterAsyncMessenger.invoke({
     method: "oneway",
     data: 111
 }, {
@@ -68,7 +68,7 @@ emitterAsyncMessager.invoke({
 }).then(res => console.log("oneway request res:", res))
 
 
-emitterAsyncMessager.on("continuous-event", function onEvent(data) {
+emitterAsyncMessenger.on("continuous-event", function onEvent(data) {
     console.log("continuous-event:", data);
 })
 

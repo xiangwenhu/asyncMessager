@@ -37,6 +37,7 @@
 
 events.js
 ```js
+import { BaseAsyncMessenger, BaseReqData, GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
 import { BaseReqData } from "async-messager"
 
@@ -78,7 +79,7 @@ import emitter from "./events";
 type RequestData  = BaseReqData;
 type ResponseData = RequestData;
 
-class EmitterAsyncMessager extends BaseAsyncMessager {
+class EmitterAsyncMessenger extends BaseAsyncMessenger {
     constructor(options: GlobalReqOptions = {}) {
         super(options);
     }
@@ -96,31 +97,21 @@ class EmitterAsyncMessager extends BaseAsyncMessager {
     }
 }
 
-export default new EmitterAsyncMessager();
-```
+const emitterAsyncMessenger = new EmitterAsyncMessenger();
+emitterAsyncMessenger.subscribe();
 
 index.js
 ```js
 import messager from "./messager";
 
-messager.subscribe();
-
-// 有发有回
-messager.invoke({
+// 调用
+emitterAsyncMessenger.invoke({
     method: "cccc",
     data: 111
 }).then(res => console.log("res:", res))
 
-// 只发不回
-messager.invoke({
-    method: "oneway",
-    data: 111
-}, {
-    sendOnly: true,
-}).then(res => console.log("oneway request res:", res))
-
-// 被动通知
-messager.on("continuous-event", function onEvent(data) {
+// 传统的监听事件
+emitterAsyncMessenger.addHandler("continuous-event", function onEvent(data) {
     console.log("continuous-event:", data);
 })
 ```
@@ -129,7 +120,7 @@ messager.on("continuous-event", function onEvent(data) {
 
 ```html
     <iframe src="./iframe1.html" id="ifr"></iframe>
-    <script src="../../dist/asyncMessager.js"></script>
+    <script src="../../dist/umd/asyncMessenger.js"></script>
     <script>
 
         function sendMessage(msg) {
@@ -137,7 +128,7 @@ messager.on("continuous-event", function onEvent(data) {
         }
         const iframe1 = document.getElementById("ifr");
 
-        const asyncMessager = new AsyncMessager.BaseAsyncMessager({
+        const asyncMessenger = new AsyncMessenger.BaseAsyncMessenger({
             // logUnhandledEvent: false,
             subscribe(onMessage) {
                 function onIframeMessage(msg) {
@@ -155,7 +146,7 @@ messager.on("continuous-event", function onEvent(data) {
 
         iframe1.contentWindow.onload = () => {
             // 异步Promise调用
-            asyncMessager.invoke({
+            asyncMessenger.invoke({
                 method: "init",
                 data: {
                     user: 123456,
@@ -164,7 +155,7 @@ messager.on("continuous-event", function onEvent(data) {
             }).then(res => console.log("index.html:", res, res))
         }
         // 传统的回调调用
-        asyncMessager.on("timeInfo", function(data){
+        asyncMessenger.on("timeInfo", function(data){
             console.log("index.html:timeInfo", data);
         })
 
@@ -183,7 +174,7 @@ function sendMessage(msg) {
     socket.emit("message", msg)
 }
 
-const asyncMessager = new AsyncMessager.BaseAsyncMessager({
+const asyncMessenger = new AsyncMessenger.BaseAsyncMessenger({
     // logUnhandledEvent: false,
     subscribe(onMessage) {
         function onSocketMessage(msg) {
@@ -201,7 +192,7 @@ const asyncMessager = new AsyncMessager.BaseAsyncMessager({
 
 socket.on("connect", () => {
     console.log("connect")
-    asyncMessager.invoke({
+    asyncMessenger.invoke({
         method: "getUsers",
         data: {
             user: 123456,
@@ -210,7 +201,7 @@ socket.on("connect", () => {
     }).then(res => console.log("index.html:", res, res))
 });
 
-asyncMessager.on("timeInfo", function (data) {
+asyncMessenger.on("timeInfo", function (data) {
     console.log("index.html:timeInfo", data);
 });
 

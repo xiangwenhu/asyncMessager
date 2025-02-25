@@ -5,25 +5,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>index.html</title>
 </head>
 
 <body>
-
-
     <iframe src="./iframe1.html" id="ifr"></iframe>
     <iframe src="./iframe2.html" id="ifr2"></iframe>
-    <script src="../../lib/asyncMessager.js"></script>
+    <script src="../../dist/umd/index.js"></script>
     <script>
 
         const iframe1 = document.getElementById("ifr");
         const iframe2 = document.getElementById("ifr2");
 
         function sendMessage(msg, iframe) {
-            iframe.contentWindow.postMessage(msg)
+            iframe.contentWindow.postMessage(msg, "*")
         }
 
-        const asyncMessager = new AsyncMessager.BaseAsyncMessager({
+        const asyncMessenger = new AsyncMessenger.BaseAsyncMessenger({
             // logUnhandledEvent: false,
             subscribe(onMessage) {
                 function onIframeMessage(msg) {
@@ -35,7 +33,7 @@
                 }
             },
             getReqMsgType(data) {
-                console.log(`asyncMessager getReqCategory: method=${data.method} scope=${data.scope}`);
+                console.log(`asyncMessenger getReqCategory: method=${data.method} scope=${data.scope}`);
                 return data.method;
             },
             getResMsgType(data) {
@@ -46,34 +44,36 @@
             }
         });
 
+        asyncMessenger.subscribe();
+
 
         // scope: iframe1
         iframe1.contentWindow.onload = () => {
-            asyncMessager.invoke({
+            asyncMessenger.invoke({
                 method: "init",
                 scope: "iframe1",
                 data: {
                     user: 123456,
                     token: "blabla......",
                 }
-            }, {}, iframe1).then(res => console.log(`iframe1 , message from ${res.data.source}.html:`,  res))
+            }, {}, iframe1).then(res => console.log(`iframe1 , message from ${res.data.source}.html:`, res))
         }
 
 
         // scope: iframe2
         iframe2.contentWindow.onload = () => {
-            asyncMessager.invoke({
+            asyncMessenger.invoke({
                 method: "init",
                 scope: "iframe2",
                 data: {
                     user: 123456,
                     token: "blabla......"
                 }
-            }, {}, iframe2).then(res => console.log(`iframe2 ,message from ${res.data.source}.html:`,  res))
+            }, {}, iframe2).then(res => console.log(`iframe2 ,message from ${res.data.source}.html:`, res))
         }
 
         // 没有scope
-        // asyncMessager.addHandler("timeInfo", function (data) {
+        // asyncMessenger.addHandler("timeInfo", function (data) {
         //     console.log("index.html:timeInfo", data);
         // })
 

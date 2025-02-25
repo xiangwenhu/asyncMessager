@@ -1,10 +1,10 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.AsyncMessager = {}));
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.AsyncMessenger = {}));
 })(this, (function (exports) { 'use strict';
 
-    class PEventMessager {
+    class PEventMessenger {
         constructor() {
             this._map = new Map();
             /**
@@ -16,7 +16,7 @@
                 const cates = Array.isArray(messageType) ? messageType : [messageType];
                 const map = this._map;
                 if (typeof listener !== "function") {
-                    return console.error(`PassiveEventMessager::addHandler: fn 必须是一个函数`);
+                    return console.error(`PassiveEventMessenger::addHandler: fn 必须是一个函数`);
                 }
                 cates.forEach(cate => {
                     let handlers = map.get(cate);
@@ -36,7 +36,7 @@
                 const cates = Array.isArray(messageType) ? messageType : [messageType];
                 const map = this._map;
                 if (typeof listener !== "function") {
-                    return console.error(`PassiveEventMessager::removeHandler: fn 必须是一个函数`);
+                    return console.error(`PassiveEventMessenger::removeHandler: fn 必须是一个函数`);
                 }
                 let cate;
                 for (let i = 0; i < cates.length; i++) {
@@ -68,7 +68,7 @@
                 handlers.forEach(handler => {
                     const { listener: fun } = handler;
                     if (!fun) {
-                        console.error(`PassiveEventMessager:不能找到category为${messageType}对应的${handler.methodName}事件处理函数`);
+                        console.error(`PassiveEventMessenger:不能找到category为${messageType}对应的${handler.methodName}事件处理函数`);
                     }
                     else {
                         fun.apply(handler.target, [data].concat(args));
@@ -176,7 +176,7 @@
         enableLog: true,
         logUnhandledEvent: true,
     };
-    class BaseAsyncMessager extends PEventMessager {
+    class BaseAsyncMessenger extends PEventMessenger {
         constructor(options = DEFAULT_GLOBAL_OPTIONS) {
             super();
             this.useOptions = false;
@@ -205,7 +205,7 @@
                 const scope = this.getMethod("getResScope")(data);
                 const callback = this.getCallback(messageType, scope, responseId);
                 const isInHandlers = this.has(messageType);
-                //  AsyncMessager中没有，PEventMessager中也没有, 并且开启相关的日志输出
+                //  AsyncMessenger中没有，PEventMessenger中也没有, 并且开启相关的日志输出
                 if (!callback && !isInHandlers && this.options.logUnhandledEvent) {
                     this.onError();
                     console.warn(`未找到category为${messageType},key为${responseId}的回调信息`);
@@ -372,7 +372,7 @@
         }
     }
 
-    exports.BaseAsyncMessager = BaseAsyncMessager;
+    exports.BaseAsyncMessenger = BaseAsyncMessenger;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
