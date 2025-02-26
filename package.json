@@ -1,6 +1,6 @@
 {
-  "name": "async-messenger",
-  "version": "0.0.1",
+  "name": "async-messenger-js",
+  "version": "0.0.3",
   "description": "",
   "main": "./dist/lib/index.js",
   "typings": "./dist/lib/index.d.ts",

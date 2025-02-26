@@ -27,7 +27,10 @@ export interface BaseReqData<R = any> {
 }
 
 
-export type BaseResData<S = any> = BaseReqData<S>
+export type BaseResData<S = any> = Omit<BaseReqData<S>, "requestId"> & {
+    responseId?: string;
+}
+
 
 export interface RequestInfo<D = any> {
     requestId: string | undefined;
@@ -40,13 +43,29 @@ export interface RequestInfo<D = any> {
 export type Unsubscribe = () => void;
 
 export interface GlobalReqOptions<R = any, S = any> {
+    /**
+     * 请求超时时间
+     */
     timeout?: number;
+    /**
+     * 是否自动订阅
+     */
     autoSubscribe?: boolean;
+    /**
+     * 自动生成请求ID, 如果自定义，内置的无效
+     */
+    autoGenerateRequestId?: boolean;
+    /**
+     * 是否清理过期的请求
+     */
     clearTimeoutReq?: boolean;
     /**
      * clearTimeoutReq开启后，过期多少时间的请求会被清理
      */
     expiredTime?: number;
+    /**
+     * 启用日志
+     */
     enableLog?: boolean;
     /**
      * 输出未处理的事件回调
@@ -67,7 +86,7 @@ export interface GlobalReqOptions<R = any, S = any> {
      */
     getReqMsgType?(data: BaseReqData<R>): MessageType;
     /**
-     * 获得响应的Key
+     * 获得响应的唯一标识
      * @param data 
      */
     getResponseId?(data: BaseResData<S>): string
@@ -89,7 +108,7 @@ export interface GlobalReqOptions<R = any, S = any> {
      * @param data 
      * @param key 
      */
-    request?(data: BaseResData<S>, key: string): any;
+    request?(data: BaseResData<S>): any;
 }
 
 

@@ -7,7 +7,7 @@ const DEFAULT_GLOBAL_OPTIONS: GlobalReqOptions = {
     timeout: 5000,
     clearTimeoutReq: true,
     enableLog: true,
-    logUnhandledEvent: true,
+    logUnhandledEvent: true
 };
 
 type ExtensibleMethod = "subscribe" | "getRequestId" | "getReqMsgType" | "getResponseId" | "getResMsgType" | "request" | "getResScope" | "onResponse";
@@ -46,12 +46,12 @@ export default class BaseAsyncMessenger extends PEventMessenger<MessageType> {
     }
 
     /**
-     * 获取请求的key
+     * 获取请求的唯一标识
      * @param data 
      * @returns 
      */
-    protected getRequestId<D>(_data: BaseReqData<D>): string {
-        return util.uuid()
+    protected getRequestId<D>(_data: BaseReqData<D>): string | undefined {
+        return this.options.autoGenerateRequestId ? util.uuid() : undefined;
     }
 
     protected getReqMsgType<D>(data: BaseReqData<D>): MessageType | undefined {
@@ -67,7 +67,7 @@ export default class BaseAsyncMessenger extends PEventMessenger<MessageType> {
     }
 
     protected getResponseId<RD>(data: BaseResData<RD>): string | undefined {
-        return data.requestId;
+        return data.responseId;
     }
 
     protected getResScope<RD>(data: BaseResData<RD>) {
@@ -106,7 +106,7 @@ export default class BaseAsyncMessenger extends PEventMessenger<MessageType> {
         //  AsyncMessenger中没有，PEventMessenger中也没有, 并且开启相关的日志输出
         if (!callback && !isInHandlers && this.options.logUnhandledEvent) {
             this.onError();
-            console.warn(`未找到category为${messageType},key为${responseId}的回调信息`);
+            console.warn(`未找到category为${messageType},requestId${responseId}的回调信息`);
             return;
         }
         this.onSuccess(messageType, data);
@@ -139,7 +139,7 @@ export default class BaseAsyncMessenger extends PEventMessenger<MessageType> {
         return reqInfo.cb;
     }
 
-    invoke<D = any, RD = any>(data: BaseResData<D>, reqOptions?: RequestOptions, ...args: any[]): Promise<BaseResData<RD> | undefined> {
+    invoke<D = any, RD = any>(data: BaseReqData<D>, reqOptions?: RequestOptions, ...args: any[]): Promise<BaseResData<RD> | undefined> {
         this.statistics.reqCount++;
         const {
             timeout = 5000,
@@ -192,7 +192,7 @@ export default class BaseAsyncMessenger extends PEventMessenger<MessageType> {
                 scope: data.scope
             });
             // 调用
-            this.getMethod("request")(data, requestId, ...args);
+            this.getMethod("request")(data, ...args);
         });
     }
 
