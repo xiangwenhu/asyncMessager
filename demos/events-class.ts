@@ -24,17 +24,19 @@ class EmitterAsyncMessenger extends BaseAsyncMessenger {
     }
 }
 
-const emitterAsyncMessenger = new EmitterAsyncMessenger();
+const emitterAsyncMessenger = new EmitterAsyncMessenger({
+    autoGenerateRequestId: true
+});
 emitterAsyncMessenger.subscribe();
 
 
 
-setInterval(() => {
-    emitter.emit('message', {
-        method: 'continuous-event',
-        data: new Date().toLocaleTimeString()
-    })
-}, 3000)
+// setInterval(() => {
+//     emitter.emit('message', {
+//         method: 'continuous-event',
+//         data: new Date().toLocaleTimeString()
+//     })
+// }, 3000)
 
 
 emitter.on("message-request", (data: RequestData) => {
@@ -68,8 +70,8 @@ emitterAsyncMessenger.invoke({
 }).then(res => console.log("oneway request res:", res))
 
 
-emitterAsyncMessenger.on("continuous-event", function onEvent(data) {
-    console.log("continuous-event:", data);
-})
+// emitterAsyncMessenger.on("continuous-event", function onEvent(data) {
+//     console.log("continuous-event:", data);
+// })
 
 

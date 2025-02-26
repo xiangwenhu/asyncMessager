@@ -5,7 +5,7 @@ const emitter = new EventEmitter();
 
 
 // 初始化异步Messenger
-const Messenger = new BaseAsyncMessenger({
+const messenger = new BaseAsyncMessenger({
     // logUnhandledEvent: false,
     subscribe(onMessage) {
         emitter.on("message", onMessage as any);
@@ -19,7 +19,7 @@ const Messenger = new BaseAsyncMessenger({
     }
 });
 
-Messenger.subscribe();
+messenger.subscribe();
 
 const symbolReqType = Symbol.for("reqType");
 
@@ -48,18 +48,18 @@ emitter.on("message-request", (data: BaseReqData) => {
 /*使用方 */
 
 // 调用
-Messenger.invoke<number>({
+messenger.invoke<number>({
     method: symbolReqType,  
     data: 111,
 }).then(res => console.log("res:", res))
 
-Messenger.on(symbolReqType, function onEvent(data) {
+messenger.on(symbolReqType, function onEvent(data) {
     console.log("symbolCccc:", data);
 })
 
 
 // 传统的监听事件
-Messenger.on("continuous-event", function onEvent(data) {
+messenger.on("continuous-event", function onEvent(data) {
     console.log("continuous-event:", data);
 })
 
