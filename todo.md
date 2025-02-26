@@ -32,7 +32,8 @@ const Messenger = new BaseAsyncMessenger({
     }
 });
 ``` 
-- [ ] 支持once
+- [x] 支持once
+  无需实现，实现本身就是每次调用添加回调。
 - [x] 支持scope，仅仅支持一个callback响应
 - [ ] 支持scope的多个响应
 - [ ] 重写统计，独立出来
