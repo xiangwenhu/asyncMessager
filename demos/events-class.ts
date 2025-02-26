@@ -1,10 +1,8 @@
-import { BaseAsyncMessenger, BaseReqData, GlobalReqOptions } from "../src/index";
+import { BaseAsyncMessenger, BaseReqData, BaseResData, GlobalReqOptions } from "../src/index";
 import EventEmitter from "events";
+import { listener } from "../src/decorator"
 
 const emitter = new EventEmitter();
-
-type RequestData  = BaseReqData;
-type ResponseData = RequestData;
 
 class EmitterAsyncMessenger extends BaseAsyncMessenger {
     constructor(options: GlobalReqOptions = {}) {
@@ -19,8 +17,15 @@ class EmitterAsyncMessenger extends BaseAsyncMessenger {
         }
     }
 
-    protected request(data: RequestData) {
+    protected request(data: BaseReqData) {
         emitter.emit("message-request", data);
+    }
+
+    @listener({
+        type: "time"
+    })
+    timeListener(data: BaseResData) {
+        console.log("time:data", data)
     }
 }
 
@@ -38,11 +43,18 @@ emitterAsyncMessenger.subscribe();
 //     })
 // }, 3000)
 
+setInterval(() => {
+    emitter.emit('message', {
+        type: 'time',
+        data: new Date().toISOString()
+    })
+}, 3000)
 
-emitter.on("message-request", (data: RequestData) => {
+
+emitter.on("message-request", (data: BaseResData) => {
 
     // 单向的，不回发消息
-    if(data.method === "oneway"){
+    if (data.method === "oneway") {
         return;
     }
 

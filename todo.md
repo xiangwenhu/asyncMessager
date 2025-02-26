@@ -2,7 +2,7 @@
 ## 现存在的问题
 - [x] 区分addHandler和异步invoke的回调函数
 - [x] 属性键支持 number 和 Symbol
-- [ ] 装饰器，支持class
+- [x] 装饰器，支持class (2025-02-26)
 ```typescript
 // 初始化异步Messenger
 const Messenger = new BaseAsyncMessenger({
@@ -32,6 +32,7 @@ const Messenger = new BaseAsyncMessenger({
     }
 });
 ``` 
+- [ ] 支持context?，方便与外面搭建桥梁
 - [x] 支持once
   无需实现，实现本身就是每次调用添加回调。
 - [x] 支持scope，仅仅支持一个callback响应
